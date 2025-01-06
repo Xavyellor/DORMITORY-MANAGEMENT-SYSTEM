@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+{% endblock %}
+
+    <!-- <form method="POST">
+        {{form.hidden_tag()}}
+        {{form.email.label}}{{form.email()}}<br>
+        {{form.username.label}}{{form.username()}}<br>
+        {{form.password.label}}{{form.password()}}<br> 
+        {{form.pass_confirm.label}}{{form.pass_confirm()}}<br>
+        {{form.submit()}}
+    </form> -->
+
+    <div class="register-form">
+        <div class="form">
+            <form method="POST" action="{{ url_for('register') }}">
+            {{form.hidden_tag()}}
+            {{form.email.label}}{{form.email()}}<br>
+            {{form.username.label}}{{form.username()}}<br>
+            {{form.password.label}}{{form.password()}}<br> 
+            {{form.pass_confirm.label}}{{form.pass_confirm()}}<br>
+            <button type="submit">Register</button>
+            <p class="message">Already registered? <a href="{{ url_for('login') }}">Log In</a></p>
+          </form>
+        </div>
+    </div>
+        
+    
+{% endblock %}
+

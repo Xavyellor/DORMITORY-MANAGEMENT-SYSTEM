@@ -1,0 +1,34 @@
+/* base.css */
+/* Navbar styles */
+body{
+    display: flex;
+    flex-direction: column;
+}
+#nav {
+    /* position: fixed;  */
+    /* Ensures the navbar stays at the top */
+    top: 0; /* Aligns the navbar to the top */
+    left: 0;
+    width: 100%; /* Makes the navbar span the full width */
+    background-color: #343a40; /* Matches the background color */
+    color: #ffffff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: flex-end; /* Aligns links to the right */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow */
+    z-index: 1000; /* Ensures the navbar is above other elements */
+}
+
+#nav a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+#nav a:hover {
+    color: #ffc107; /* Highlight color on hover */
+}
+
+

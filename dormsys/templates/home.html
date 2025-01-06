@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Available Properties</h2>
+    <div id="property-listings">
+        {% for property in properties %}
+            <div class="property">
+                <h3>{{ property.title }}</h3>
+                <p>{{ property.description }}</p>
+                <p>Price: ${{ property.price }}</p>
+                <p>Posted by: {{ property.owner.username }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
