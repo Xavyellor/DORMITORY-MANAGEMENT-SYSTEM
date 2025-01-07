@@ -19,11 +19,12 @@ class User(db.Model, UserMixin):
     gender = db.Column(db.String(10), nullable=True)
     address = db.Column(db.String(250), nullable=True)
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
+    role = db.Column(db.String(10), nullable=False, default="Tenant")  # Add role field
 
     # Relationship with Property
     properties = db.relationship('Property', backref='owner', lazy=True)
 
-    def __init__(self, email, username, password, phone_number=None, date_of_birth=None, gender=None, address=None):
+    def __init__(self, email, username, password, phone_number=None, date_of_birth=None, gender=None, address=None, role="Tenant"):
         self.email = email
         self.username = username
         self.password_hash = generate_password_hash(password)
@@ -31,6 +32,7 @@ class User(db.Model, UserMixin):
         self.date_of_birth = date_of_birth
         self.gender = gender
         self.address = address
+        self.role = role
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)

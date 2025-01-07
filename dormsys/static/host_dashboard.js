@@ -1,23 +1,26 @@
-// Dashboard JavaScript for managing Add, Edit, and Delete actions on the user's listings
-
 document.addEventListener("DOMContentLoaded", function () {
     // Open the Edit Modal and populate it with property data
     window.openEditModal = function (id, title, description, price, location, numBeds, amenities, status) {
-        console.log(`Opening modal for ID: ${id}`);
-        console.log(`Title: ${title}, Description: ${description}, Price: ${price}, Location: ${location}, Beds: ${numBeds}, Amenities: ${amenities}, Status: ${status}`);
-    
-        // Populate modal fields
+        console.log(`Opening modal with ID=${id}`);
+
+        // Populate the modal fields with property data
         document.getElementById('editTitle').value = title;
         document.getElementById('editDescription').value = description;
         document.getElementById('editPrice').value = price;
         document.getElementById('editLocation').value = location;
         document.getElementById('editNumBeds').value = numBeds;
-        document.getElementById('editAmenities').value = amenities;
+
+        // Handle amenities (comma-separated list)
+        const amenitiesArray = amenities.split(', ').map(item => item.trim());
+        document.querySelectorAll('#editAmenities input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = amenitiesArray.includes(checkbox.value);
+        });
+
         document.getElementById('editStatus').value = status;
-    
-        // Dynamically set the form's action URL to include the property ID
+
+        // Set the form action URL dynamically
         document.getElementById('editPropertyForm').action = `/edit_property/${id}`;
-    
+
         // Display the modal
         document.getElementById('editModal').style.display = 'block';
     };
@@ -29,7 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Attach confirmation to Delete buttons
     const deleteForms = document.querySelectorAll('form[action*="/delete_property"]');
-
     deleteForms.forEach(form => {
         form.addEventListener('submit', function (e) {
             if (!confirm("Are you sure you want to delete this property?")) {
@@ -55,8 +57,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Debug: Ensure JavaScript file is loaded
-    console.log('Dashboard.js loaded successfully');
+    console.log('host_dashboard.js loaded successfully');
 });
+
+
 
 
 

@@ -5,26 +5,30 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 {% endblock %}
 
-    <!-- <form method="POST">
-        {{form.hidden_tag()}}
-        {{form.email.label}}{{form.email()}}
-        {{form.password.label}}{{form.password()}} 
-        {{form.submit()}}
-    </form> -->
-
-    <div class="login-page">
-        <div class="form">
-          <form method="POST">
+<div class="login-page">
+    <div class="form">
+        <form method="POST" action="{{ url_for('login') }}">
             {{ form.hidden_tag() }}
             {{ form.email.label }}{{ form.email() }}
             {{ form.password.label }}{{ form.password() }}
-            <!-- <button type="submit">Log In</button> -->
-            {{form.submit()}}
+            
+            <!-- Role Selection -->
+            <div>
+                <label for="role">Select your role:</label><br>
+                <input type="radio" id="host" name="role" value="Host" required>
+                <label for="host">Host</label><br>
+                <input type="radio" id="tenant" name="role" value="Tenant" required>
+                <label for="tenant">Tenant</label><br>
+            </div>
+
+            {{ form.submit() }}
             <p class="message">Not registered? <a href="{{ url_for('register') }}">Create an account</a></p>
-          </form>
-        </div>
+        </form>
     </div>
+</div>
+
 {% endblock %}
+
 
 
 

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <h2 class="mt-4 mb-4">Your Dashboard</h2>
+
+    <!-- Add New Listing Form -->
+    <div class="mb-4">
+        <h3>Create a New Listing</h3>
+        <form id="propertyForm" method="POST" action="{{ url_for('add_listing') }}">
+            <div class="mb-3">
+                <label for="title" class="form-label">Property Title</label>
+                <input type="text" id="title" name="title" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea id="description" name="description" class="form-control" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" id="price" name="price" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" name="location" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="num_beds" class="form-label">Number of Beds</label>
+                <input type="number" id="num_beds" name="num_beds" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Amenities</label>
+                <div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="wifi" name="amenities" value="Wi-Fi">
+                        <label class="form-check-label" for="wifi">Wi-Fi</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="air_conditioning" name="amenities" value="Air Conditioning">
+                        <label class="form-check-label" for="air_conditioning">Air Conditioning</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="tv" name="amenities" value="Television">
+                        <label class="form-check-label" for="tv">Television</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="parking" name="amenities" value="Parking">
+                        <label class="form-check-label" for="parking">Parking</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="laundry" name="amenities" value="Laundry">
+                        <label class="form-check-label" for="laundry">Laundry</label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Listing</button>
+        </form>
+    </div>
+
+    <!-- Property Listings -->
+    <div id="your-listings" class="row">
+        {% for property in properties %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ property.title }}</h5>
+                        <p class="card-text">{{ property.description }}</p>
+                        <p class="card-text"><strong>Price:</strong> ${{ property.price }}</p>
+                        <p class="card-text"><strong>Location:</strong> {{ property.location }}</p>
+                        <p class="card-text"><strong>Number of Beds:</strong> {{ property.num_beds }}</p>
+                        <p class="card-text"><strong>Amenities:</strong> {{ property.amenities }}</p>
+                        <p class="card-text"><strong>Status:</strong>
+                            {% if property.status == 'Available' %}
+                                <span class="text-success">{{ property.status }}</span>
+                            {% else %}
+                                <span class="text-danger">{{ property.status }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="card-footer text-center">
+                        <button class="btn btn-primary"
+                            onclick="openEditModal({{ property.id }}, '{{ property.title|escape }}', '{{ property.description|escape }}', {{ property.price }}, '{{ property.location|escape }}', {{ property.num_beds }}, '{{ property.amenities|escape }}', '{{ property.status }}')">Edit
+                        </button>
+
+                        <form action="{{ url_for('delete_property', id=property.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+
+    <!-- Modal for Editing a Property -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Property</h2>
+            <form id="editPropertyForm" method="POST">
+                <div>
+                    <label for="editTitle">Property Title</label>
+                    <input type="text" id="editTitle" name="title" required>
+                </div>
+                <div>
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" name="description" required></textarea>
+                </div>
+                <div>
+                    <label for="editPrice">Price</label>
+                    <input type="number" id="editPrice" name="price" required>
+                </div>
+                <div>
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" name="location" required>
+                </div>
+                <div>
+                    <label for="editNumBeds">Number of Beds</label>
+                    <input type="number" id="editNumBeds" name="num_beds" required>
+                </div>
+                <div id="editAmenities">
+                    <label>Amenities</label>
+                    <div>
+                        <input type="checkbox" id="editAmenityWifi" value="Wi-Fi" name="amenities">
+                        <label for="editAmenityWifi">Wi-Fi</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="editAmenityAC" value="Air Conditioning" name="amenities">
+                        <label for="editAmenityAC">Air Conditioning</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="editAmenityTV" value="Television" name="amenities">
+                        <label for="editAmenityTV">Television</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="editAmenityParking" value="Parking" name="amenities">
+                        <label for="editAmenityParking">Parking</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="editAmenityLaundry" value="Laundry" name="amenities">
+                        <label for="editAmenityLaundry">Laundry</label>
+                    </div>
+                </div>
+                <div>
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus" name="status">
+                        <option value="Available">Available</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
