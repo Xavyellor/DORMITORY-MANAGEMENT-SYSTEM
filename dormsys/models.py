@@ -42,20 +42,26 @@ class Property(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(150), nullable=False)
+    images = db.Column(db.Text, nullable=True)  
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    location = db.Column(db.String(255), nullable=True)  # New field
-    num_beds = db.Column(db.Integer, nullable=True)  # New field
-    amenities = db.Column(db.Text, nullable=True)  # Comma-separated list of amenities
-    status = db.Column(db.String(50), default="Available")  # "Available" or "Unavailable"
+    location = db.Column(db.String(255), nullable=True)  
+    latitude = db.Column(db.Float, nullable=True)         
+    longitude = db.Column(db.Float, nullable=True)        
+    num_beds = db.Column(db.Integer, nullable=True)  
+    amenities = db.Column(db.Text, nullable=True)  
+    status = db.Column(db.String(50), default="Available")  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-    def __init__(self, title, description, price, location, num_beds, amenities, status, user_id):
+    def __init__(self, title, images, description, price, location, latitude, longitude, num_beds, amenities, status, user_id):
         self.title = title
+        self.images = images #new
         self.description = description
         self.price = price
         self.location = location #new
+        self.latitude = latitude #new
+        self.longitude = longitude #new
         self.num_beds = num_beds #new
         self.amenities = amenities #new
         self.status = status #new
@@ -65,5 +71,3 @@ class Property(db.Model):
     def __repr__(self):
         return f"<Property {self.title} owned by User {self.user_id}>"
 
-    # def __repr__(self):
-    #     return f"<User(id={self.id}, email={self.email})>"
