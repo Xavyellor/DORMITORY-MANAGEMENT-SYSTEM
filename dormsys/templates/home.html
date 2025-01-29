@@ -1,83 +1,187 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div id="search-bar" class="search-container">
-        <div class="search-field">
-            <label for="location">Where?</label>
-            <input type="text" id="location" placeholder="Add your preferred location">
-        </div>
-        <div class="search-field">
-            <label for="budget">Budget?</label>
-            <input type="text" id="budget" placeholder="Property price range">
-        </div>
-        <div class="search-field">
-            <label for="capacity">Capacity?</label>
-            <input type="number" id="capacity" placeholder="Add room/unit capacity">
-        </div>
-        <button class="search-btn" onclick="performSearch()">Search</button>
-    </div>
+<!-- Internal CSS for Hero Section -->
+<style>
+    /* Wrapper to control sidebar movement */
+    .content-wrapper {
+        margin-left: 250px; /* Default sidebar width */
+        transition: margin-left 0.3s ease;
+    }
 
-    <!-- <div id="property-listings">
-        {% for property in properties %}
-            <div class="property-card">
-                <h3 class="property-title">{{ property.title }}</h3>
-                <p class="property-description">{{ property.description }}</p>
-                <p class="property-price"><strong>Price:</strong> ${{ property.price }}</p>
-                <p class="property-location"><strong>Location:</strong> {{ property.location }}</p>
-                <p class="property-capacity"><strong>Number of Beds:</strong> {{ property.num_beds }}</p>
-                <p class="property-amenities"><strong>Amenities:</strong> {{ property.amenities }}</p>
-                <p class="property-owner"><strong>Posted by:</strong> {{ property.owner.username }}</p>
+    #sidebar.expanded + .content-wrapper {
+        margin-left: 80px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        width: 100%;
+        height: 40vh; /* Fixed height */
+        overflow: hidden;
+    }
+
+    .hero-section img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Maintains aspect ratio */
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .content-wrapper {
+            margin-left: 200px;
+        }
+
+        #sidebar.expanded + .content-wrapper {
+            margin-left: 60px;
+        }
+    }
+</style>
+
+
+<div class="container mt-5">
+     <!-- Hero Section (Full Width Inside Content) -->
+     <div class="hero-section">
+        <img src="{{ url_for('static', filename='assets/header 2.png') }}" alt="Student Dormitory">
+    </div>
+    <!-- Search Form -->
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form.query.label(class="form-label") }}
+                    {{ form.query(class="form-control", placeholder="Search by title or location") }}
+                </div>
             </div>
-        {% endfor %}
-    </div> -->
-    <div class="container mt-5">
-        <h1 class="mb-4">Available Properties</h1>
-        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form.date.label(class="form-label") }}
+                    {{ form.date(class="form-control") }}
+                </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Property Listings -->
+    <div class="row">
+        {% if properties %}
             {% for property in properties %}
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
-                        <!-- Property Carousel -->
-                        <div id="propertyCarousel{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
+                        
+                        <!-- ✅ Property Image Carousel -->
+                        <div id="carousel{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
                             <div class="carousel-inner">
                                 {% if property.images %}
-                                    {% for image_path in property.images.split(', ') %}
-                                        <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                            <img src="{{ url_for('static', filename='uploads/' ~ image_path) }}" class="d-block w-100" alt="Property Image">
-                                        </div>
+                                    {% set images = property.images.split(', ') %}
+                                    {% for img in images %}
+                                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                        <img src="{{ url_for('static', filename='uploads/' + img) }}" 
+                                             class="d-block w-100"
+                                             alt="{{ property.title }}" 
+                                             style="height: 200px; object-fit: cover;">
+                                    </div>
                                     {% endfor %}
                                 {% else %}
                                     <div class="carousel-item active">
-                                        <img src="{{ url_for('static', filename='default_image.jpg') }}" class="d-block w-100" alt="Default Image">
+                                        <img src="{{ url_for('static', filename='uploads/default_image.jpg') }}" 
+                                             class="d-block w-100"
+                                             alt="Default Property Image" 
+                                             style="height: 200px; object-fit: cover;">
                                     </div>
                                 {% endif %}
                             </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel{{ property.id }}" data-bs-slide="prev">
+
+                            <!-- Carousel Controls -->
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ property.id }}" data-bs-slide="prev">
                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                 <span class="visually-hidden">Previous</span>
                             </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel{{ property.id }}" data-bs-slide="next">
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ property.id }}" data-bs-slide="next">
                                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                 <span class="visually-hidden">Next</span>
                             </button>
                         </div>
-    
-                        <!-- Property Details -->
-                        <div class="property" data-lat="{{ property.latitude }}" data-lon="{{ property.longitude }}">
+
+                        <!-- Property Overview -->
+                        <div class="card-body">
                             <h5 class="card-title">{{ property.title }}</h5>
                             <p><strong>Price:</strong> ${{ property.price }}</p>
-                            <p><strong>Location:</strong> {{ property.location }}</p>  
-                            <p><strong>Distance:</strong> <span class="distance">Calculating...</span></p>                         
-                            <p><strong>Status:</strong> 
-                                {% if property.status == 'Available' %}
-                                    <span class="text-success">{{ property.status }}</span>
+                            <p><strong>Location:</strong> {{ property.location }}</p>
+                            <button class="btn btn-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#propertyModal{{ property.id }}">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal for Expanded Property Details -->
+                <div class="modal fade" id="propertyModal{{ property.id }}" 
+                     tabindex="-1" 
+                     aria-labelledby="propertyModalLabel{{ property.id }}" 
+                     aria-hidden="true" 
+                     data-bs-backdrop="false">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="propertyModalLabel{{ property.id }}">{{ property.title }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Description:</strong> {{ property.description }}</p>
+                                <p><strong>Price:</strong> ${{ property.price }}</p>
+                                <p><strong>Location:</strong> {{ property.location }}</p>
+                                <p><strong>Number of Beds:</strong> {{ property.num_beds }}</p>
+                                <p><strong>Amenities:</strong> {{ property.amenities }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if property.status == 'Available' %}
+                                        <span class="text-success">{{ property.status }}</span>
+                                    {% else %}
+                                        <span class="text-danger">{{ property.status }}</span>
+                                    {% endif %}
+                                </p>
+
+                                <!-- Booking Form -->
+                                {% if current_user.is_authenticated and current_user.role == 'Tenant' %}
+                                    <form method="POST" action="{{ url_for('book_property', property_id=property.id) }}">
+                                        {{ form.hidden_tag() }}
+                                        <div class="mb-3">
+                                            {{ form.date.label(class="form-label") }}
+                                            {{ form.date(class="form-control") }}
+                                        </div>
+                                        <button type="submit" class="btn btn-success">Book Viewing</button>
+                                    </form>
+
+                                    <!-- Add to Wishlist -->
+                                    <form method="POST" action="{{ url_for('add_to_wishlist') }}">
+                                        <input type="hidden" name="property_id" value="{{ property.id }}">
+                                        <button type="submit" class="btn btn-warning">Add to Wishlist</button>
+                                    </form>
+
+                                    <!-- Request Contract -->
+                                    <form method="POST" action="{{ url_for('request_contract', property_id=property.id) }}">
+                                        <input type="hidden" name="property_id" value="{{ property.id }}">
+                                        <button type="submit" class="btn btn-primary">Request Contract</button>
+                                    </form>
                                 {% else %}
-                                    <span class="text-danger">{{ property.status }}</span>
+                                    <p class="text-muted">Log in as a tenant to book a viewing.</p>
                                 {% endif %}
-                            </p>
+
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
-        </div>
+        {% else %}
+            <p class="text-muted">No properties available at the moment.</p>
+        {% endif %}
     </div>
+</div>
 {% endblock %}
+

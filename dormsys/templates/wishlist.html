@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Your Wishlist</h1>
+
+    <div class="row">
+        {% if wishlist %}
+            {% for item in wishlist %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <!-- Property Image -->
+                        <img src="{{ url_for('static', filename='uploads/' ~ (item.property.images.split(', ')[0] if item.property.images else 'default_image.jpg')) }}" 
+                             class="card-img-top"
+                             alt="{{ item.property.title }}"
+                             style="height: 200px; object-fit: cover;">
+
+                        <!-- Property Details -->
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">{{ item.property.title }}</h5>
+                            <p class="text-muted text-truncate"><i class="bi bi-geo-alt"></i> {{ item.property.location }}</p>
+                            <p><strong>Price:</strong> ${{ item.property.price }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if item.property.status == 'Available' %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unavailable</span>
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#propertyModal{{ item.property.id }}">
+                                View Details
+                            </button>
+                            <form method="POST" action="{{ url_for('remove_from_wishlist', wishlist_id=item.id) }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property Details Modal -->
+                <div class="modal fade" id="propertyModal{{ item.property.id }}" tabindex="-1" aria-labelledby="propertyModalLabel{{ item.property.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{{ item.property.title }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Description:</strong> {{ item.property.description }}</p>
+                                <p><strong>Price:</strong> ${{ item.property.price }}</p>
+                                <p><strong>Location:</strong> {{ item.property.location }}</p>
+                                <p><strong>Number of Beds:</strong> {{ item.property.num_beds }}</p>
+                                <p><strong>Amenities:</strong> {{ item.property.amenities }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if item.property.status == 'Available' %}
+                                        <span class="text-success">Available</span>
+                                    {% else %}
+                                        <span class="text-danger">Unavailable</span>
+                                    {% endif %}
+                                </p>
+
+                                <!-- Booking & Wishlist Actions -->
+                                <div class="d-flex justify-content-between">
+                                    <!-- Book Property Button -->
+                                    <form method="POST" action="{{ url_for('book_property', property_id=item.property.id) }}">
+                                        <button type="submit" class="btn btn-success">Book Viewing</button>
+                                    </form>
+
+                                    <!-- Remove from Wishlist -->
+                                    <form method="POST" action="{{ url_for('remove_from_wishlist', wishlist_id=item.id) }}">
+                                        <button type="submit" class="btn btn-outline-danger">Remove from Wishlist</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <p class="text-muted text-center">You don't have any properties in your wishlist.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

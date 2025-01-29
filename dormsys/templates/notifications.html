@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="text-primary mb-4">Notifications</h2>
+
+    {% if notifications %}
+    <ul class="list-group">
+        {% for notification in notifications %}
+        <li class="list-group-item">
+            {{ notification.message }}
+            <span class="text-muted float-end">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+
+            {% if "contract has been approved" in notification.message %}
+                <br>
+                <a href="{{ url_for('view_contract', contract_id=notification.contract_id) }}" 
+                   class="btn btn-primary btn-sm mt-2">View Contract</a>
+
+                {% if (datetime.utcnow() - notification.created_at).seconds < 3600 %}
+                    <form method="POST" action="{{ url_for('accept_contract', contract_id=notification.contract_id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm mt-2">Accept Contract</button>
+                    </form>
+                {% else %}
+                    <span class="text-danger">Contract expired.</span>
+                {% endif %}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">No notifications yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+
+
+

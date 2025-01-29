@@ -1,33 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
-{% endblock %}
-
-<div class="login-page">
-    <div class="form">
+<div class="login-page d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="form card shadow-lg border-0 rounded p-4" style="max-width: 400px; width: 100%;">
+        <h3 class="text-center mb-4 text-primary">Login</h3>
         <form method="POST" action="{{ url_for('login') }}">
             {{ form.hidden_tag() }}
-            {{ form.email.label }}{{ form.email() }}
-            {{ form.password.label }}{{ form.password() }}
-            
-            <!-- Role Selection -->
-            <div>
-                <label for="role">Select your role:</label><br>
-                <input type="radio" id="host" name="role" value="Host" required>
-                <label for="host">Host</label><br>
-                <input type="radio" id="tenant" name="role" value="Tenant" required>
-                <label for="tenant">Tenant</label><br>
+
+            <!-- Email Field -->
+            <div class="mb-3">
+                {{ form.email.label(class_='form-label fw-bold text-secondary') }}
+                {{ form.email(class_='form-control rounded-pill') }}
             </div>
 
-            {{ form.submit() }}
-            <p class="message">Not registered? <a href="{{ url_for('register') }}">Create an account</a></p>
+            <!-- Password Field -->
+            <div class="mb-3">
+                {{ form.password.label(class_='form-label fw-bold text-secondary') }}
+                {{ form.password(class_='form-control rounded-pill') }}
+            </div>
+
+            <!-- Role Selection Slider -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-secondary">Select your role:</label>
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border rounded-pill">
+                    <div class="form-check">
+                        <input type="radio" id="host" name="role" value="Host" class="btn-check" required>
+                        <label for="host" class="btn btn-outline-primary rounded-pill px-4">Host</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="radio" id="tenant" name="role" value="Tenant" class="btn-check" required>
+                        <label for="tenant" class="btn btn-outline-secondary rounded-pill px-4">Tenant</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid">
+                {{ form.submit(class_='btn btn-primary rounded-pill py-2 fw-bold') }}
+            </div>
+
+            <p class="message text-center mt-3 text-secondary">Not registered? <a href="{{ url_for('register') }}" class="text-decoration-none text-primary fw-bold">Create an account</a></p>
         </form>
     </div>
 </div>
 
 {% endblock %}
+
 
 
 
