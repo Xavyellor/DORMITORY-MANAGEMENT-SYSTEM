@@ -128,6 +128,18 @@
                     <label for="capacity" class="">Capacity</label>
                     <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Number of beds">
                 </div>
+                <!-- 🔹 Sorting Dropdown (ADD THIS BELOW) -->
+                <div class="search-box-home">
+                    <label for="sort_by">Sort By</label>
+                    <select id="sort_by" name="sort_by" class="form-control">
+                        <option value="price_low_high">Price: Low to High</option>
+                        <option value="price_high_low">Price: High to Low</option>
+                        <option value="capacity_high_low">Capacity: High to Low</option>
+                        <option value="capacity_low_high">Capacity: Low to High</option>
+                        <option value="location_asc">Location: A to Z</option>
+                        <option value="location_desc">Location: Z to A</option>
+                    </select>
+                </div>
                 <!-- Search Button -->
                 <div class="search-btn">
                     <button type="submit" class="submit-btn">{{ form.submit.label }}</button>

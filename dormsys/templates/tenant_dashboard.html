@@ -125,8 +125,8 @@
     </div>
 </div>
 
-<!-- Contract Start and End Dates -->
-<div class="bottom-section-tenant">
+ <!-- Contract Section -->
+ <div class="bottom-section-tenant">
     <div class="card-header-tenant">
         <h4>Your Contract Dates</h4>
     </div>
@@ -134,7 +134,16 @@
     <div class="card-body">
         <p><strong>Start Date:</strong> {{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else 'N/A' }}</p>
         <p><strong>End Date:</strong> {{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else 'N/A' }}</p>
+
+        {% if contract.contract_file %}
+            <a href="{{ url_for('download_contract', contract_id=contract.id) }}" class="btn btn-primary">
+                📄 Download Contract
+            </a>
+        {% else %}
+            <p class="text-muted">No contract file available.</p>
+        {% endif %}
     </div>
+</div>
 </div>
 
 
@@ -170,10 +179,3 @@
         }
     </style>
 {% endblock %}
-
-
-
-
-
-
-

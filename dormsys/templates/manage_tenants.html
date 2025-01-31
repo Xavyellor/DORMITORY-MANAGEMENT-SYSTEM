@@ -6,26 +6,30 @@
 
     {% if tenants %}
     <div class="table-responsive">
-        <table class="table table-striped table-hover">
+        <table class="table table-striped table-hover align-middle">
             <thead class="table-dark">
                 <tr>
                     <th>Tenant Name</th>
+                    <th>Email</th> <!-- NEW COLUMN -->
                     <th>Property</th>
+                    <th>Contract Start Date</th> <!-- NEW COLUMN -->
+                    <th>Contract End Date</th> <!-- NEW COLUMN -->
                     <th>Contract Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                {% for tenant, property, contract in tenants %}
+                {% for tenant in tenants %}
                 <tr>
                     <td>{{ tenant.username }}</td>
-                    <td>{{ property.title }}</td>
+                    <td>{{ tenant.email }}</td> <!-- NEW DATA -->
+                    <td>{{ tenant.property_name }}</td>
+                    <td>{{ tenant.start_date.strftime('%Y-%m-%d') if tenant.start_date else 'N/A' }}</td> <!-- NEW DATA -->
+                    <td>{{ tenant.end_date.strftime('%Y-%m-%d') if tenant.end_date else 'N/A' }}</td> <!-- NEW DATA -->
+                    <td><span class="badge bg-success">{{ tenant.status }}</span></td>
                     <td>
-                        <span class="badge bg-success">{{ contract.status }}</span>
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ url_for('remove_tenant', contract_id=contract.id) }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Remove Tenant</button>
+                        <form method="POST" action="{{ url_for('remove_tenant', contract_id=tenant.contract_id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm" title="Remove Tenant">Remove Tenant</button>
                         </form>
                     </td>
                 </tr>
@@ -39,5 +43,6 @@
 </div>
 
 {% endblock %}
+
 
 

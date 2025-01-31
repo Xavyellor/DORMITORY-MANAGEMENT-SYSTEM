@@ -36,15 +36,71 @@ app.config['CONTRACT_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__f
 
 # Create the folder if it doesn’t exist
 os.makedirs(app.config['CONTRACT_FOLDER'], exist_ok=True)
-@app.route('/')
+
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    properties = Property.query.all()
+    form = SearchForm()
+
+    # ✅ Extract search parameters from form
+    search_query = request.form.get('query', '').strip()
+    max_budget = request.form.get('budget', '').strip()
+    min_capacity = request.form.get('capacity', '').strip()
+    sort_by = request.form.get('sort_by', 'price_low_high')
+
+    # ✅ Start building the query
+    properties_query = Property.query
+
+    # 🔹 Filter by search query (title or location) only if provided
+    if search_query:
+        properties_query = properties_query.filter(
+            db.or_(
+                Property.title.ilike(f"%{search_query}%"),
+                Property.location.ilike(f"%{search_query}%")
+            )
+        )
+
+    # 🔹 Filter by budget (max price) if valid input is provided
+    if max_budget:
+        try:
+            max_budget = float(max_budget)
+            properties_query = properties_query.filter(Property.price <= max_budget)
+        except ValueError:
+            flash("Invalid budget value. Please enter a valid number.", "danger")
+
+    # 🔹 Filter by capacity (minimum number of beds) if valid input is provided
+    if min_capacity:
+        try:
+            min_capacity = int(min_capacity)
+            properties_query = properties_query.filter(Property.num_beds >= min_capacity)
+        except ValueError:
+            flash("Invalid capacity value. Please enter a valid number.", "danger")
+
+    # 🔹 Sorting Logic (applied only after filtering)
+    sorting_options = {
+        "price_low_high": Property.price.asc(),
+        "price_high_low": Property.price.desc(),
+        "capacity_high_low": Property.num_beds.desc(),
+        "capacity_low_high": Property.num_beds.asc(),
+        "location_asc": Property.location.asc(),
+        "location_desc": Property.location.desc(),
+    }
+    properties_query = properties_query.order_by(sorting_options.get(sort_by, Property.price.asc()))
+
+    # ✅ Execute the final query
+    properties = properties_query.all()
+
+    # ✅ Retrieve tenant-specific bookings if logged in
     tenant_bookings = {}
     if current_user.is_authenticated and current_user.role == "Tenant":
         bookings = Booking.query.filter_by(tenant_id=current_user.id).all()
         tenant_bookings = {booking.property_id: booking for booking in bookings}
 
-    return render_template('home.html', properties=properties, tenant_bookings=tenant_bookings, form=SearchForm())
+    return render_template(
+        'home.html',
+        properties=properties,
+        tenant_bookings=tenant_bookings,
+        form=form
+    )
 
 @app.route('/logout')
 @login_required
@@ -189,18 +245,30 @@ def tenant_dashboard():
 def cancel_booking(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
-    if booking.tenant_id != current_user.id:
-        abort(403)  # Restrict access
+    # Ensure the action is performed by the tenant who made the booking or the host
+    if current_user.id != booking.tenant_id and current_user.id != booking.property.user_id:
+        abort(403)
 
     try:
-        db.session.delete(booking)
+        # Change status to "Cancelled"
+        booking.status = "Cancelled"
+
+        # Notify the host
+        host_notification = Notification(
+            user_id=booking.property.user_id,
+            message=f"Booking for {booking.property.title} by {current_user.username} has been cancelled."
+        )
+        db.session.add(host_notification)
+
+        # Commit changes to database
         db.session.commit()
-        flash('Booking cancelled successfully.', 'success')
+        flash("Booking cancelled successfully.", "success")
+
     except Exception as e:
         db.session.rollback()
-        flash(f'Error cancelling booking: {str(e)}', 'danger')
+        flash(f"Error cancelling booking: {str(e)}", "danger")
 
-    return redirect(url_for('tenant_dashboard'))
+    return redirect(url_for('manage_bookings'))
 
 
 @app.route('/add_listing', methods=['POST'])
@@ -687,25 +755,28 @@ def accept_contract(contract_id):
     # Ensure the contract has not expired
     if contract.tenant_acceptance_deadline and contract.tenant_acceptance_deadline < datetime.utcnow():
         flash("Contract acceptance period has expired.", "danger")
-        return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
+        return redirect(url_for('view_notifications'))
 
     # ✅ Mark the contract as accepted
     contract.tenant_accepted = True
     contract.status = "Signed"
 
-    # ✅ Set the start date to the current time and the end date to one year later
+    # ✅ Set contract start and end dates
     contract.start_date = datetime.utcnow()
-    contract.end_date = contract.start_date + timedelta(days=365)  # 1 year later
+    contract.end_date = contract.start_date + timedelta(days=365)  # Example: 1 year
 
-    # ✅ Assign the tenant to the property
+    # ✅ Assign tenant to the property
     property = Property.query.get(contract.property_id)
     if property:
-        property.tenant_id = contract.tenant_id  # Assign tenant to property
+        property.tenant_id = contract.tenant_id
+
+    # ✅ DELETE the corresponding notification
+    Notification.query.filter_by(user_id=current_user.id, contract_id=contract.id).delete()
 
     db.session.commit()
 
     flash("Contract successfully accepted! You are now a tenant.", "success")
-    return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
+    return redirect(url_for('view_notifications'))
 
 @app.route('/manage_bookings', methods=['GET'])
 @login_required
@@ -873,16 +944,6 @@ def profile():
 
     return render_template('profile.html')
 
-# @app.route('/debug_notifications')
-# @login_required
-# def debug_notifications():
-#     from dormsys.models import Notification
-#     notifications = Notification.query.all()
-#     output = []
-#     for n in notifications:
-#         output.append(f"Notification ID: {n.id}, Contract ID: {n.contract_id}")
-#     return "<br>".join(output)
-
 @app.route('/manage_tenants', methods=['GET'])
 @login_required
 def manage_tenants():
@@ -893,9 +954,17 @@ def manage_tenants():
     properties = Property.query.filter_by(user_id=current_user.id).all()
     property_ids = [p.id for p in properties]
 
-    # Fetch tenants who have accepted contracts
+    # Fetch tenants who have accepted contracts with additional fields
     tenants = (
-        db.session.query(User, Property, Contract)
+        db.session.query(
+            User.username,
+            User.email,
+            Property.title.label("property_name"),
+            Contract.start_date,
+            Contract.end_date,
+            Contract.status,
+            Contract.id.label("contract_id")  # Needed for removal action
+        )
         .join(Contract, Contract.tenant_id == User.id)
         .join(Property, Contract.property_id == Property.id)
         .filter(Property.user_id == current_user.id, Contract.status == "Signed")
@@ -934,22 +1003,31 @@ def remove_tenant(contract_id):
 
     return redirect(url_for('manage_tenants'))
 
-# Example route to handle property rating
-# @app.route('/rate_property/<int:property_id>', methods=['POST'])
-# @login_required
-# def rate_property(property_id):
-#     rating = request.form.get('rating')
-#     property = Property.query.get(property_id)
-    
-#     if property:
-#         tenant_rating = TenantRating(property_id=property.id, user_id=current_user.id, rating=rating)
-#         db.session.add(tenant_rating)
-#         db.session.commit()
-#         flash('Your rating has been submitted!', 'success')
-#     else:
-#         flash('Property not found!', 'danger')
-    
-#     return redirect(url_for('tenant_dashboard'))
+@app.route('/download_contract/<int:contract_id>', methods=['GET'])
+@login_required
+def download_contract(contract_id):
+    contract = Contract.query.get_or_404(contract_id)
+
+    # Ensure only the tenant who signed the contract can download it
+    if contract.tenant_id != current_user.id:
+        abort(403)
+
+    # Check if the contract file exists
+    if not contract.contract_file:
+        flash("No contract file available.", "danger")
+        return redirect(url_for('tenant_dashboard'))
+
+    # Path to stored contracts
+    contract_folder = os.path.join(current_app.root_path, 'dormsys', 'static', 'contracts')
+    contract_path = os.path.join(contract_folder, contract.contract_file)
+
+    # Ensure the file exists
+    if not os.path.exists(contract_path):
+        flash("Contract file is missing.", "danger")
+        return redirect(url_for('tenant_dashboard'))
+
+    # Serve the file as a download
+    return send_from_directory(contract_folder, contract.contract_file, as_attachment=True)
 
 
 

@@ -175,7 +175,6 @@
                 <a href="{{ url_for('manage_tenants') }}" class="nav-item"><i class="bi bi-building"></i><span class="sidebar-text">Tenants</span></a>
                 <a href="{{ url_for('manage_bookings') }}" class="nav-item"><i class="bi bi-building"></i><span class="sidebar-text">Manage Bookings</span></a>
                 <a href="{{ url_for('manage_contracts') }}" class="nav-item"><i class="bi bi-file-earmark-text"></i> <span class="sidebar-text">Manage Contracts</span></a>
-                <a href="#" class="nav-item disabled"><i class="bi bi-bell"></i> <span class="sidebar-text">Notifications</span></a>
                 <a href="{{ url_for('profile') }}" class="nav-item"><i class="bi bi-person"></i> <span class="sidebar-text">Profile Settings</span></a>
             {% elif current_user.role == 'Tenant' %}
                 <a href="{{ url_for('tenant_dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> <span class="sidebar-text">Dashboard</span></a>
