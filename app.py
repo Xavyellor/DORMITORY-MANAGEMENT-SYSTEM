@@ -18,12 +18,24 @@ from dormsys.models import Notification
 from datetime import datetime, timedelta
 from flask import send_from_directory
 from werkzeug.security import generate_password_hash
+import os
+from fpdf import FPDF
+from flask import current_app
+from pytz import timezone
+from sqlalchemy.orm import joinedload
+from werkzeug.utils import secure_filename
+from flask_login import current_user
+from sqlalchemy.orm import joinedload
 
 
 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dormsys', 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Automatically create the folder if it doesn't exist
 
+app.config['CONTRACT_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dormsys', 'static', 'contracts')
+
+# Create the folder if it doesn’t exist
+os.makedirs(app.config['CONTRACT_FOLDER'], exist_ok=True)
 @app.route('/')
 def home():
     properties = Property.query.all()
@@ -109,21 +121,67 @@ def host_dashboard():
     # Fetch bookings for these properties
     bookings = Booking.query.filter(Booking.property_id.in_(property_ids)).all()
 
-    return render_template('host_dashboard.html', bookings=bookings, properties=properties)
+    # Fetch number of tenants who have accepted a contract
+    tenant_count = (
+        db.session.query(Contract)
+        .join(Property, Contract.property_id == Property.id)
+        .filter(Property.user_id == current_user.id, Contract.status == "Signed")
+        .count()
+    )
+
+    return render_template(
+        'host_dashboard.html',
+        properties=properties,
+        tenant_count=tenant_count
+    )
+
+from datetime import datetime
 
 @app.route('/tenant_dashboard', methods=['GET'])
 @login_required
 def tenant_dashboard():
-    if current_user.role != "Tenant":
+    if current_user.role != 'Tenant':
         abort(403)
 
-    # Fetch approved bookings with tickets
-    tickets = Booking.query.filter_by(tenant_id=current_user.id, status="Approved").filter(Booking.ticket_id.isnot(None)).all()
+    # Retrieve the tenant's contract (only signed contracts)
+    contract = Contract.query.filter_by(tenant_id=current_user.id, status='Signed').first()
 
-    # Fetch pending bookings
-    bookings = Booking.query.filter_by(tenant_id=current_user.id, status="Pending").all()
+    if not contract:
+        flash("No active contract found.", "danger")
+        return redirect(url_for('home'))  # Redirect to home if no contract is found
 
-    return render_template('tenant_dashboard.html', tickets=tickets, bookings=bookings)
+    # Check if the contract's end date is due and auto-terminate if needed
+    if contract.end_date < datetime.utcnow() and contract.status != 'Terminated':
+        # Automatically terminate the contract if the end date is passed
+        contract.status = 'Terminated'
+        db.session.commit()
+        flash("Your contract has been automatically terminated due to the end date passing.", "warning")
+
+    # Retrieve property information related to the contract
+    property = Property.query.get(contract.property_id)
+
+    # Retrieve host information
+    host = contract.host
+
+    # Retrieve tenants living in the same property (excluding the current user and host) with their contracts eagerly loaded
+    tenants = User.query.join(Contract, Contract.tenant_id == User.id) \
+        .filter(Contract.property_id == contract.property_id) \
+        .filter(Contract.status == 'Signed') \
+        .filter(Contract.tenant_id != current_user.id) \
+        .filter(Contract.tenant_id != host.id) \
+        .options(joinedload(User.contracts)) \
+        .all()
+
+    # Fetch the bookings for the current user (tenant)
+    bookings = Booking.query.filter_by(tenant_id=current_user.id).all()
+
+    # Pass the tenants and bookings to the template
+    return render_template("tenant_dashboard.html", 
+                           bookings=bookings, 
+                           tenants=tenants, 
+                           contract=contract, 
+                           property=property, 
+                           host=host)
 
 # Cancel a booking
 @app.route('/cancel_booking/<int:booking_id>', methods=['POST'])
@@ -426,18 +484,31 @@ def request_contract(property_id):
         flash("Only tenants can request contracts.", "danger")
         return redirect(url_for('home'))
 
-    # Check if a contract request already exists
+    # Check if a contract request already exists for the property
     existing_contract = Contract.query.filter_by(property_id=property_id, tenant_id=current_user.id).first()
-    if existing_contract:
-        flash("You have already requested a contract for this property.", "warning")
-        return redirect(url_for('home'))
 
-    # Create a new contract request
+    if existing_contract:
+        if existing_contract.status == "Signed":
+            # Tenant already has an active contract
+            flash("You have already signed a contract for this property.", "warning")
+            return redirect(url_for('home'))
+        elif existing_contract.status == "Terminated":
+            # If the contract is terminated, allow the tenant to request a new contract
+            flash("Your previous contract was terminated. You can now request a new contract.", "info")
+        else:
+            # If contract status is something else (e.g., Pending, Rejected)
+            flash(f"Your contract request status is '{existing_contract.status}'.", "info")
+    else:
+        flash("You have not requested a contract for this property yet.", "info")
+
+    # Create a new contract request for the property
     new_contract = Contract(
         property_id=property_id,
         tenant_id=current_user.id,
-        host_id=property.user_id,
-        status="Pending"
+        host_id=property.user_id,  # Assuming the host is the property owner
+        status="Pending",  # Set the status to 'Pending' initially
+        start_date=datetime.utcnow(),
+        end_date=datetime.utcnow() + timedelta(days=365)  # Example: 1 year contract duration
     )
 
     try:
@@ -449,6 +520,7 @@ def request_contract(property_id):
         flash(f"Error submitting contract request: {str(e)}", "danger")
 
     return redirect(url_for('home'))
+
 @app.route('/manage_contracts')
 @login_required
 def manage_contracts():
@@ -475,32 +547,60 @@ def manage_contracts():
 def approve_contract(contract_id):
     contract = Contract.query.get_or_404(contract_id)
 
-    # Ensure the host owns the property before approving
     if contract.host_id != current_user.id:
         abort(403)
 
-    try:
-        # Update contract status to Approved
-        contract.status = "Approved"
-        contract.updated_at = datetime.utcnow()
-        db.session.commit()
+    # Check if a file was uploaded
+    if 'contract_file' not in request.files:
+        flash("No contract file uploaded.", "danger")
+        return redirect(url_for('manage_contracts'))
 
-        # Send notification to the tenant
+    file = request.files['contract_file']
+
+    # Ensure a file was selected
+    if file.filename == '':
+        flash("No selected file.", "danger")
+        return redirect(url_for('manage_contracts'))
+
+    try:
+        # ✅ Ensure the directory exists
+        contract_folder = os.path.join(current_app.root_path, 'dormsys', 'static', 'contracts')
+        os.makedirs(contract_folder, exist_ok=True)
+
+        # ✅ Generate a secure filename and save the file
+        filename = f"contract_{contract.id}.pdf"
+        file_path = os.path.join(contract_folder, filename)
+        file.save(file_path)
+
+        # ✅ Set timezone (e.g., Asia/Manila or another relevant time zone)
+        local_tz = timezone('Asia/Manila')  # Change based on location
+        utc_now = datetime.utcnow()
+        local_time = utc_now.astimezone(local_tz)
+
+        # ✅ Update contract status and store filename in DB
+        contract.status = "Approved"
+        contract.updated_at = local_time
+        contract.contract_file = filename  # Store filename only, not the full path
+
+        # ✅ Set acceptance deadline (1 hour after approval in local timezone)
+        contract.tenant_acceptance_deadline = local_time + timedelta(hours=1)
+
+        # ✅ Notify the tenant
         new_notification = Notification(
             user_id=contract.tenant_id,
-            message=f"Your contract for {contract.property.title} has been approved. You have 1 hour to accept.",
-            contract_id=contract.id  # Store contract ID for tracking
+            message=f"Your contract for {contract.property.title} has been approved. You can now download it.",
+            contract_id=contract.id
         )
         db.session.add(new_notification)
         db.session.commit()
 
-        flash("Contract approved successfully. Notification sent to tenant.", "success")
+        flash("Contract approved and uploaded successfully!", "success")
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error approving contract: {str(e)}", "danger")
 
     return redirect(url_for('manage_contracts'))
-
 
 @app.route('/reject_contract/<int:contract_id>', methods=['POST'])
 @login_required
@@ -529,6 +629,11 @@ def reject_contract(contract_id):
 
     return redirect(url_for('manage_contracts'))
 
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
 @app.route('/notifications', methods=['GET'])
 @login_required
 def view_notifications():
@@ -537,9 +642,25 @@ def view_notifications():
 
     notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
     
+    # Set timezone
+    manila_tz = timezone('Asia/Manila')
+    now_local = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(manila_tz)  # Ensure `now_local` is aware
+
+    # Convert all timestamps and check contract expiration
+    for notification in notifications:
+        notification.created_at = notification.created_at.replace(tzinfo=timezone('UTC')).astimezone(manila_tz)
+
+        if notification.contract and notification.contract.tenant_acceptance_deadline:
+            # Convert tenant_acceptance_deadline to aware datetime
+            contract_deadline = notification.contract.tenant_acceptance_deadline.replace(tzinfo=timezone('UTC')).astimezone(manila_tz)
+
+            # Compare aware datetimes
+            notification.contract.expired = contract_deadline < now_local  # True if expired
+
     # Mark all notifications as read
     for notification in notifications:
         notification.is_read = True
+
     db.session.commit()
 
     return render_template('notifications.html', notifications=notifications)
@@ -563,18 +684,28 @@ def accept_contract(contract_id):
 
     contract = Contract.query.get_or_404(contract_id)
 
-    # Check if the acceptance period has expired
-    if contract.tenant_acceptance_deadline < datetime.utcnow():
+    # Ensure the contract has not expired
+    if contract.tenant_acceptance_deadline and contract.tenant_acceptance_deadline < datetime.utcnow():
         flash("Contract acceptance period has expired.", "danger")
-        return redirect(url_for('notifications'))
+        return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
 
-    # Mark the contract as accepted
+    # ✅ Mark the contract as accepted
     contract.tenant_accepted = True
     contract.status = "Signed"
+
+    # ✅ Set the start date to the current time and the end date to one year later
+    contract.start_date = datetime.utcnow()
+    contract.end_date = contract.start_date + timedelta(days=365)  # 1 year later
+
+    # ✅ Assign the tenant to the property
+    property = Property.query.get(contract.property_id)
+    if property:
+        property.tenant_id = contract.tenant_id  # Assign tenant to property
+
     db.session.commit()
 
-    flash("Contract successfully accepted!", "success")
-    return redirect(url_for('notifications'))
+    flash("Contract successfully accepted! You are now a tenant.", "success")
+    return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
 
 @app.route('/manage_bookings', methods=['GET'])
 @login_required
@@ -653,11 +784,60 @@ def delete_booking(booking_id):
 def view_contract(contract_id):
     contract = Contract.query.get_or_404(contract_id)
 
-    # Ensure the tenant owns this contract
+    # Ensure only the tenant can download the contract
     if contract.tenant_id != current_user.id:
         abort(403)
 
-    return send_from_directory(app.config['UPLOAD_FOLDER'], contract.contract_file)
+    # Check if the contract file exists
+    if not contract.contract_file:
+        flash("No contract file available.", "danger")
+        return redirect(url_for('notifications'))
+
+    # Define the correct contract folder path
+    contract_folder = os.path.join(current_app.root_path, 'dormsys', 'static', 'contracts')
+    contract_path = os.path.join(contract_folder, contract.contract_file)
+
+    # Verify the file exists
+    if not os.path.exists(contract_path):
+        flash("Contract file is missing.", "danger")
+        return redirect(url_for('notifications'))
+
+    # Serve the file as a download
+    return send_from_directory(contract_folder, contract.contract_file, as_attachment=True)
+
+# Allowed extensions for profile pictures
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Directory to save profile pictures
+UPLOAD_FOLDER = os.path.join('static', 'display_pictures')
+
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    """Check if the file has a valid extension."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Define allowed extensions for the profile picture
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Function to check allowed file types
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Define allowed extensions for the profile picture
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Function to check allowed file types
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Define allowed extensions for the profile picture
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Function to check allowed file types
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -674,11 +854,104 @@ def profile():
         if new_password:
             current_user.password_hash = generate_password_hash(new_password)
 
+        # Handle Profile Picture Upload
+        if 'profile_picture' in request.files:
+            profile_picture = request.files['profile_picture']
+            if profile_picture and allowed_file(profile_picture.filename):
+                filename = secure_filename(profile_picture.filename)
+
+                # Use the absolute path to save the file inside 'dormsys/static/display_pictures'
+                file_path = os.path.join(os.getcwd(), 'dormsys', 'static', 'display_pictures', filename)  # Updated path
+
+                # Save the image to the correct folder
+                profile_picture.save(file_path)
+                current_user.profile_picture = filename  # Update user's profile picture field
+
         db.session.commit()
         flash("Profile updated successfully!", "success")
         return redirect(url_for('profile'))
 
     return render_template('profile.html')
+
+# @app.route('/debug_notifications')
+# @login_required
+# def debug_notifications():
+#     from dormsys.models import Notification
+#     notifications = Notification.query.all()
+#     output = []
+#     for n in notifications:
+#         output.append(f"Notification ID: {n.id}, Contract ID: {n.contract_id}")
+#     return "<br>".join(output)
+
+@app.route('/manage_tenants', methods=['GET'])
+@login_required
+def manage_tenants():
+    if current_user.role != "Host":
+        abort(403)
+
+    # Fetch properties owned by the host
+    properties = Property.query.filter_by(user_id=current_user.id).all()
+    property_ids = [p.id for p in properties]
+
+    # Fetch tenants who have accepted contracts
+    tenants = (
+        db.session.query(User, Property, Contract)
+        .join(Contract, Contract.tenant_id == User.id)
+        .join(Property, Contract.property_id == Property.id)
+        .filter(Property.user_id == current_user.id, Contract.status == "Signed")
+        .all()
+    )
+
+    return render_template('manage_tenants.html', tenants=tenants)
+
+@app.route('/remove_tenant/<int:contract_id>', methods=['POST'])
+@login_required
+def remove_tenant(contract_id):
+    if current_user.role != "Host":
+        abort(403)
+
+    contract = Contract.query.get_or_404(contract_id)
+
+    # Ensure the contract belongs to a property owned by the host
+    if contract.property.user_id != current_user.id:
+        abort(403)
+
+    try:
+        # Reset tenant_id in Property table
+        property = Property.query.get(contract.property_id)
+        if property:
+            property.tenant_id = None  # Remove tenant from property
+
+        # Update contract status
+        contract.status = "Terminated"
+
+        db.session.commit()
+        flash("Tenant removed successfully.", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error removing tenant: {str(e)}", "danger")
+
+    return redirect(url_for('manage_tenants'))
+
+# Example route to handle property rating
+# @app.route('/rate_property/<int:property_id>', methods=['POST'])
+# @login_required
+# def rate_property(property_id):
+#     rating = request.form.get('rating')
+#     property = Property.query.get(property_id)
+    
+#     if property:
+#         tenant_rating = TenantRating(property_id=property.id, user_id=current_user.id, rating=rating)
+#         db.session.add(tenant_rating)
+#         db.session.commit()
+#         flash('Your rating has been submitted!', 'success')
+#     else:
+#         flash('Property not found!', 'danger')
+    
+#     return redirect(url_for('tenant_dashboard'))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

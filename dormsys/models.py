@@ -22,10 +22,14 @@ class User(db.Model, UserMixin):
     address = db.Column(db.String(250), nullable=True)
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     role = db.Column(db.String(10), nullable=False, default="Tenant")
+    profile_picture = db.Column(db.String(100), nullable=True, default='default.jpg')  # New field
 
     # Relationships
     properties = db.relationship('Property', backref='owner', lazy=True, cascade="all, delete-orphan")
-    bookings = db.relationship('Booking', backref='tenant', lazy=True, cascade="all, delete-orphan")  # Renamed for clarity
+    bookings = db.relationship('Booking', backref='tenant', lazy=True, cascade="all, delete-orphan")
+    
+    # Specify the foreign key for the contracts relationship
+    contracts = db.relationship('Contract', backref='tenant_contract', foreign_keys='Contract.tenant_id', lazy=True)
 
     def __init__(self, email, username, password, phone_number=None, date_of_birth=None, gender=None, address=None, role="Tenant"):
         self.email = email
@@ -43,6 +47,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"<User {self.username} ({self.role})>"
 
+
 # Property Model
 class Property(db.Model):
     __tablename__ = "properties"
@@ -59,10 +64,12 @@ class Property(db.Model):
     amenities = db.Column(db.Text, nullable=True)        # Amenities list
     status = db.Column(db.String(50), default="Available")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # tenant_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     # Relationships
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     bookings = db.relationship('Booking', backref='property', lazy=True, cascade="all, delete-orphan")
+    # tenants = db.relationship('User', backref='property', lazy=True)
 
     def __init__(self, title, images, description, price, location, latitude, longitude, num_beds, amenities, status, user_id):
         self.title = title
@@ -138,9 +145,12 @@ class Contract(db.Model):
     contract_file = db.Column(db.String(255), nullable=True)  # Path to the uploaded contract file
     status = db.Column(db.String(20), default="Pending")  # Status: Pending, Approved, Rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     tenant_acceptance_deadline = db.Column(db.DateTime, nullable=True)  # Time limit for acceptance
     tenant_accepted = db.Column(db.Boolean, default=False)  # Has the tenant accepted?
+
+    start_date = db.Column(db.DateTime, nullable=True)  # The date the tenant accepts the contract
+    end_date = db.Column(db.DateTime, nullable=True)  # The contract end date, 1 year after start date
 
     # Relationships
     property = db.relationship('Property', backref='contracts', lazy=True)
@@ -150,19 +160,23 @@ class Contract(db.Model):
     def __repr__(self):
         return f"<Contract {self.id} | Property {self.property_id} | Tenant {self.tenant_id} | Status {self.status}>"
 
+
 class Notification(db.Model):
     __tablename__ = "notifications"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Tenant who receives the notification
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  
     message = db.Column(db.Text, nullable=False)
-    is_read = db.Column(db.Boolean, default=False)  # Track if the notification is read
+    contract_id = db.Column(db.Integer, db.ForeignKey('contracts.id'), nullable=True)  # ✅ Add this field
+    is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref='notifications', lazy=True)
+    contract = db.relationship('Contract', backref='notifications', lazy=True)
 
     def __repr__(self):
-        return f"<Notification {self.id} | User {self.user_id} | Read {self.is_read}>"
+        return f"<Notification {self.id} | User {self.user_id} | Contract {self.contract_id} | Read {self.is_read}>"
+    
 
 
 

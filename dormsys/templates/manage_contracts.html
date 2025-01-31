@@ -43,7 +43,7 @@
                     <td>
                         <!-- Approve Contract with File Upload -->
                         <form method="POST" action="{{ url_for('approve_contract', contract_id=contract.id) }}" enctype="multipart/form-data">
-                            <input type="file" name="contract_file" class="form-control form-control-sm mb-2" required>
+                            <input type="file" name="contract_file" class="form-control form-control-sm mb-2" accept=".pdf" required>
                             <button type="submit" class="btn btn-success btn-sm">Approve & Upload</button>
                         </form>
 

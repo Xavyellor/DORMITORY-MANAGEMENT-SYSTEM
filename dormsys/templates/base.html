@@ -124,7 +124,7 @@
         {% if current_user.is_authenticated %}
             {% if current_user.role == 'Host' %}
                 <a href="{{ url_for('host_dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                <a href="{{ url_for('manage_properties') }}" class="nav-item"><i class="bi bi-building"></i> Tenants</a>
+                <a href="{{ url_for('manage_tenants') }}" class="nav-item"><i class="bi bi-building"></i> Tenants</a>
                 <a href="{{ url_for('manage_bookings') }}" class="nav-item"><i class="bi bi-building"></i> Manage Bookings</a>
                 <a href="{{ url_for('manage_contracts') }}" class="nav-item"><i class="bi bi-file-earmark-text"></i> Manage Contracts</a>
                 <a href="#" class="nav-item disabled"><i class="bi bi-bell"></i> Notifications</a>

@@ -4,7 +4,7 @@
 <div class="container mt-5">
     <h2 class="text-primary mb-4">Profile Settings</h2>
     
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="mb-3">
             <label class="form-label">Username</label>
             <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
@@ -30,8 +30,21 @@
             <input type="password" name="new_password" class="form-control">
         </div>
 
+        <div class="mb-3">
+            <label class="form-label">Profile Picture</label>
+            <input type="file" name="profile_picture" class="form-control">
+        </div>
+
         <button type="submit" class="btn btn-primary">Update Profile</button>
     </form>
+
+    <!-- Display Profile Picture -->
+    <h3 class="mt-4">Profile Picture</h3>
+    <img src="{{ url_for('static', filename='display_pictures/' + (current_user.profile_picture if current_user.profile_picture else 'default.jpeg')) }}" alt="Profile Picture" class="img-fluid" width="200">
 </div>
 
 {% endblock %}
+
+
+
+

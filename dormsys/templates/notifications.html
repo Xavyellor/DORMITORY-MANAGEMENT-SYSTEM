@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block content %}
 
 <div class="container mt-5">
@@ -9,20 +10,54 @@
         {% for notification in notifications %}
         <li class="list-group-item">
             {{ notification.message }}
-            <span class="text-muted float-end">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-
-            {% if "contract has been approved" in notification.message %}
+            <span class="text-muted float-end">
+                <span class="text-muted float-end">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </span>
+            
+            {% if notification.contract_id %}
                 <br>
-                <a href="{{ url_for('view_contract', contract_id=notification.contract_id) }}" 
-                   class="btn btn-primary btn-sm mt-2">View Contract</a>
+                <!-- View Contract Button - Opens the Modal -->
+                <a href="#" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#contractModal{{ notification.contract_id }}">
+                    View Contract
+                </a>
 
-                {% if (datetime.utcnow() - notification.created_at).seconds < 3600 %}
+                <!-- Accept Contract Button (Only if contract is still valid) -->
+                {% if notification.contract and not notification.contract.expired %}
                     <form method="POST" action="{{ url_for('accept_contract', contract_id=notification.contract_id) }}" class="d-inline">
                         <button type="submit" class="btn btn-success btn-sm mt-2">Accept Contract</button>
                     </form>
                 {% else %}
                     <span class="text-danger">Contract expired.</span>
                 {% endif %}
+
+
+                                <!-- Download Contract Button in Modal -->
+                <div class="modal fade" id="contractModal{{ notification.contract_id }}" tabindex="-1" aria-labelledby="contractModalLabel{{ notification.contract_id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="contractModalLabel{{ notification.contract_id }}">Download Contract</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                {% if notification.contract.contract_file %}
+                                    <a href="{{ url_for('view_contract', contract_id=notification.contract_id) }}" class="btn btn-primary" download>
+                                        Download Contract
+                                    </a>
+                                {% else %}
+                                    <p class="text-danger">Contract file not available.</p>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            {% else %}
+                <span class="text-warning">Contract ID not found.</span>
             {% endif %}
         </li>
         {% endfor %}
@@ -32,7 +67,15 @@
     {% endif %}
 </div>
 
+<!-- Include Bootstrap JS for Modals -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 {% endblock %}
+
+
+
+
+
 
 
 
