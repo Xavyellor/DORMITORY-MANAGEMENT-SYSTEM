@@ -182,6 +182,11 @@
                             <h5 class="card-title">{{ property.title }}</h5>
                             <p><strong>Price:</strong> ${{ property.price }}</p>
                             <p><strong>Location:</strong> {{ property.location }}</p>
+                            <p class="distance" id="distance-{{ property.id }}" 
+                                data-lat="{{ property.latitude }}" 
+                                data-lon="{{ property.longitude }}">
+                                Calculating distance...
+                                </p>
                             <button class="btn btn-primary" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#propertyModal{{ property.id }}">
@@ -253,6 +258,9 @@
         {% endif %}
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='home.js') }}"></script>
+
 {% endblock %}
 
 

@@ -132,9 +132,14 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="editLocation{{ property.id }}" class="form-label">Location</label>
-                                                <input type="text" id="editLocation{{ property.id }}" name="location" class="form-control" value="{{ property.location }}" required>
+                                                <label for="location" class="form-label">Location</label>
+                                                <input type="text" id="location" name="location" class="form-control" required placeholder="Enter an address">
+                                                <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
                                             </div>
+                                            
+                                            <!-- Hidden fields for latitude and longitude -->
+                                            <input type="hidden" id="latitude" name="latitude">
+                                            <input type="hidden" id="longitude" name="longitude">
                                             <div class="mb-3">
                                                 <label for="editNumBeds{{ property.id }}" class="form-label">Number of Beds</label>
                                                 <input type="number" id="editNumBeds{{ property.id }}" name="num_beds" class="form-control" value="{{ property.num_beds }}" required>
@@ -201,8 +206,14 @@
                     </div>
                     <div class="mb-3">
                         <label for="location" class="form-label">Location</label>
-                        <input type="text" id="location" name="location" class="form-control" required>
+                        <input type="text" id="location" name="location" class="form-control" required placeholder="Enter an address">
+                        <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
                     </div>
+                    
+                    <!-- Hidden fields for latitude and longitude -->
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+
                     <div class="mb-3">
                         <label for="num_beds" class="form-label">Number of Beds</label>
                         <input type="number" id="num_beds" name="num_beds" class="form-control" required>
@@ -224,4 +235,7 @@
         </div>
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='host_dashboard.js') }}"></script>
+
 {% endblock %}

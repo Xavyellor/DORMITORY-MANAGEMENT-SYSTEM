@@ -107,7 +107,9 @@
                                         <td>{{ booking.date }}</td>
                                         <td>
                                             <form method="POST" action="{{ url_for('cancel_booking', booking_id=booking.id) }}" class="d-inline">
-                                                <button type="submit" class="btn btn-warning btn-sm" title="Cancel"><i class="fas fa-undo"></i></button>
+                                                <button type="submit" class="btn btn-warning btn-sm" title="Cancel Approval">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>
@@ -117,6 +119,7 @@
                             </table>
                         </div>
                     </div>
+
                     
                     <!-- Rejected Requests -->
                     <div class="tab-pane fade" id="rejected">
