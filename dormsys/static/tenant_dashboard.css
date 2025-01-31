@@ -54,19 +54,40 @@
 
 .card-header-tenant {
     display: flex;
-    margin-left: 25px;
-    justify-content: start;
+    align-items: center;
+    justify-content: center;
 
 }
 
 .card-header-tenant h4 {
     margin-top: 15px;
     font-weight: 700;
+    justify-self: center;
 }
 
 
 .card-body hr {
     margin-top: 25px;
+}
+
+.card-body-tenant-contract a {
+    width: 250px;
+    padding: 12px;
+    border-radius: 15px;
+    border: none;
+    background: #1D2D44;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.card-body-tenant-contract {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .title-header-tenant {
