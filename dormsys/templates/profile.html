@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
+<<<<<<< HEAD
 <div class="profile-content">
     <h2 class="heading-txt-profile">PROFILE SETTING</h2>
     <hr width="100%">
@@ -44,9 +45,64 @@
         </div>
 
     </form>
+=======
+<div class="container mt-5">
+    <h2 class="text-primary mb-4">Profile Settings</h2>
+
+    <div class="row">
+        <!-- Left Column: Profile Picture -->
+        <div class="col-md-4 text-center">
+            <h4 class="mb-3">Profile Picture</h4>
+            <img src="{{ url_for('static', filename='display_pictures/' + (current_user.profile_picture if current_user.profile_picture else 'default.jpeg')) }}" 
+                 alt="Profile Picture" class="img-fluid rounded-circle border shadow" width="180">
+
+            <!-- Upload Button -->
+            <form method="POST" enctype="multipart/form-data" class="mt-3">
+                <label for="upload" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-upload"></i> Upload New Photo
+                </label>
+                <input type="file" name="profile_picture" id="upload" class="d-none" onchange="this.form.submit()">
+            </form>
+        </div>
+
+        <!-- Right Column: Compact Form -->
+        <div class="col-md-8">
+            <form method="POST">
+                <div class="mb-2">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control form-control-sm" value="{{ current_user.username }}" required>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control form-control-sm" value="{{ current_user.email }}" required>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone_number" class="form-control form-control-sm" value="{{ current_user.phone_number }}">
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Address</label>
+                    <input type="text" name="address" class="form-control form-control-sm" value="{{ current_user.address }}">
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">New Password <small class="text-muted">(Leave blank to keep current)</small></label>
+                    <input type="password" name="new_password" class="form-control form-control-sm">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm w-100">Update Profile</button>
+            </form>
+        </div>
+    </div>
+>>>>>>> 6aa8ed52bb8c68222d3955ed1f6abab375dd4a90
 </div>
 
 {% endblock %}
+
+
 
 
 

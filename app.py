@@ -27,15 +27,10 @@ from werkzeug.utils import secure_filename
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
-
-
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dormsys', 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Automatically create the folder if it doesn't exist
 
-app.config['CONTRACT_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dormsys', 'static', 'contracts')
 
-# Create the folder if it doesn’t exist
-os.makedirs(app.config['CONTRACT_FOLDER'], exist_ok=True)
 @app.route('/')
 def home():
     properties = Property.query.all()
@@ -183,85 +178,108 @@ def tenant_dashboard():
                            property=property, 
                            host=host)
 
-# Cancel a booking
 @app.route('/cancel_booking/<int:booking_id>', methods=['POST'])
 @login_required
 def cancel_booking(booking_id):
     booking = Booking.query.get_or_404(booking_id)
 
-    if booking.tenant_id != current_user.id:
-        abort(403)  # Restrict access
+    # Ensure only the host can cancel an approved booking
+    if current_user.role == "Host":
+        if booking.status == "Approved":
+            booking.status = "Canceled"
+            db.session.commit()
+            flash("Booking approval has been revoked successfully.", "warning")
+        else:
+            flash("Only approved bookings can be canceled.", "danger")
 
-    try:
-        db.session.delete(booking)
-        db.session.commit()
-        flash('Booking cancelled successfully.', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error cancelling booking: {str(e)}', 'danger')
+    else:
+        flash("Unauthorized action.", "danger")
 
-    return redirect(url_for('tenant_dashboard'))
-
+    return redirect(url_for('manage_bookings'))
 
 @app.route('/add_listing', methods=['POST'])
 @login_required
 def add_listing():
     try:
-        title = request.form.get('title')
-        description = request.form.get('description')
-        price = float(request.form.get('price'))  # Ensure price is a float
-        location = request.form.get('location')
-        num_beds = int(request.form.get('num_beds')) if request.form.get('num_beds') else None  # Ensure num_beds is an int
-        selected_amenities = request.form.getlist('amenities')  # Get amenities as a list
-        amenities = ", ".join(selected_amenities)  # Convert list to a comma-separated string
-        status = "Available"  # Default status for a new listing
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        price = request.form.get('price')
+        location = request.form.get('location', '').strip()
 
-            # Handle image uploads 
-            # A NEW FEATURE
+        if not title or not description or not price:
+            flash("Title, description, and price are required.", "danger")
+            return redirect(url_for('host_dashboard'))
+
+        try:
+            price = float(price)
+        except ValueError:
+            flash("Invalid price format.", "danger")
+            return redirect(url_for('host_dashboard'))
+
+        num_beds = request.form.get('num_beds')
+        num_beds = int(num_beds) if num_beds else None
+
+        selected_amenities = request.form.getlist('amenities')
+        amenities = ", ".join(selected_amenities) if selected_amenities else ""
+
+        status = "Available"
+
+        # ✅ Check for latitude and longitude
+        latitude = request.form.get('latitude', '').strip()
+        longitude = request.form.get('longitude', '').strip()
+
+        if not latitude or not longitude:
+            print(f"DEBUG: Latitude/Longitude missing for {location}. Attempting geocode lookup...")
+            coordinates = geocode(location)
+
+            if coordinates and "latitude" in coordinates and "longitude" in coordinates:
+                latitude = coordinates["latitude"]
+                longitude = coordinates["longitude"]
+            else:
+                flash(f"Could not fetch location coordinates for '{location}'. Please enter a valid address.", "danger")
+                return redirect(url_for('host_dashboard'))
+
+        # ✅ Log the saved coordinates
+        print(f"DEBUG: Saving property with lat={latitude}, lon={longitude}")
+
+        # ✅ Handle image uploads
         image_paths = []
         if 'images' in request.files:
             images = request.files.getlist('images')
             for image in images:
-                if image.filename != '':
+                if image.filename and allowed_file(image.filename):  # Validate file type
                     filename = secure_filename(image.filename)
                     image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                     image.save(image_path)
                     image_paths.append(filename)
-        
-        images = ', '.join(image_paths)  # Join image paths as a single string
 
-            # A NEW FEATURE
-            # Fetch coordinates for the location
-        coordinates = geocode(location)
-        latitude = coordinates.get('latitude') if coordinates else None
-        longitude = coordinates.get('longitude') if coordinates else None
+        images = ', '.join(image_paths) if image_paths else None
 
-
-        # Save the property listing to the database
+        # ✅ Save the property listing
         new_property = Property(
             title=title,
             description=description,
             price=price,
             location=location,
-            latitude=latitude,    # Save latitude
-            longitude=longitude,  # Save longitude
+            latitude=latitude,
+            longitude=longitude,
             num_beds=num_beds,
             amenities=amenities,
             status=status,
             images=images,
             user_id=current_user.id
         )
+
         db.session.add(new_property)
         db.session.commit()
 
         flash('Listing created successfully!', 'success')
+
     except Exception as e:
-        flash(f'Error creating listing: {str(e)}', 'danger')
         db.session.rollback()
+        flash(f'Error creating listing: {str(e)}', 'danger')
 
-    # Redirect based on user role
-    return redirect(url_for('host_dashboard') if current_user.role == 'Host' else url_for('tenant_dashboard'))
-
+    return redirect(url_for('host_dashboard'))
 
 @app.route('/edit_property/<int:id>', methods=['POST'])
 @login_required
@@ -329,23 +347,42 @@ def geocode_address():
 @app.route('/delete_property/<int:id>', methods=['POST'])
 @login_required
 def delete_property(id):
-    property = Property.query.get_or_404(id)
+    property_to_delete = Property.query.get_or_404(id)
 
     # Ensure the property belongs to the logged-in user
-    if property.user_id != current_user.id:
+    if property_to_delete.user_id != current_user.id:
         abort(403)  # Forbidden
 
-    try:
-        # Delete the property from the database
-        db.session.delete(property)
-        db.session.commit()
-        flash('Property deleted successfully!', 'success')
-    except Exception as e:
-        flash(f'Error deleting property: {str(e)}', 'danger')
-        db.session.rollback()
+    # ✅ Get all contracts linked to this property
+    related_contracts = Contract.query.filter(Contract.property_id == id).all()
 
-    # Redirect based on user role
-    return redirect(url_for('host_dashboard') if current_user.role == 'Host' else url_for('tenant_dashboard'))
+    # ✅ Check if there are active (Pending, Approved, Signed) contracts
+    active_contracts = [c for c in related_contracts if c.status in ["Pending", "Approved", "Signed"]]
+
+    if active_contracts:
+        flash("Cannot delete property because it has active contracts!", "danger")
+        return redirect(url_for('host_dashboard'))
+
+    try:
+        # ✅ Remove all wishlist references before deleting the property
+        Wishlist.query.filter_by(property_id=id).delete()
+
+        # ✅ Delete only non-active contracts (Rejected or Terminated)
+        for contract in related_contracts:
+            if contract.status in ["Rejected", "Terminated"]:
+                db.session.delete(contract)
+
+        # ✅ Finally, delete the property itself
+        db.session.delete(property_to_delete)
+        db.session.commit()
+
+        flash(f"Property '{property_to_delete.title}' and associated rejected contracts have been deleted!", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting property: {str(e)}", "danger")
+
+    return redirect(url_for('host_dashboard'))
 
 # Route for tenants to request a booking
 @app.route('/book_property/<int:property_id>', methods=['POST'])
@@ -484,24 +521,27 @@ def request_contract(property_id):
         flash("Only tenants can request contracts.", "danger")
         return redirect(url_for('home'))
 
-    # Check if a contract request already exists for the property
+    # ✅ Check if the tenant already has an active (Signed) contract
+    active_contract = Contract.query.filter_by(tenant_id=current_user.id, status='Signed').first()
+
+    if active_contract:
+        flash("You already have an active contract and cannot request a new one.", "warning")
+        return redirect(url_for('home'))
+
+    # ✅ Check if a contract request already exists for the same property
     existing_contract = Contract.query.filter_by(property_id=property_id, tenant_id=current_user.id).first()
 
     if existing_contract:
         if existing_contract.status == "Signed":
-            # Tenant already has an active contract
             flash("You have already signed a contract for this property.", "warning")
             return redirect(url_for('home'))
         elif existing_contract.status == "Terminated":
-            # If the contract is terminated, allow the tenant to request a new contract
             flash("Your previous contract was terminated. You can now request a new contract.", "info")
         else:
-            # If contract status is something else (e.g., Pending, Rejected)
             flash(f"Your contract request status is '{existing_contract.status}'.", "info")
-    else:
-        flash("You have not requested a contract for this property yet.", "info")
+            return redirect(url_for('home'))
 
-    # Create a new contract request for the property
+    # ✅ Create a new contract request
     new_contract = Contract(
         property_id=property_id,
         tenant_id=current_user.id,
@@ -542,13 +582,19 @@ def manage_contracts():
 
     return render_template('manage_contracts.html', contracts=contracts)
 
+# Ensure contract files are stored in `dormsys/static/contracts/`
+app.config['CONTRACT_FOLDER'] = os.path.join(app.root_path, 'static', 'contracts')
+
+# ✅ Ensure the folder exists
+os.makedirs(app.config['CONTRACT_FOLDER'], exist_ok=True)
+
 @app.route('/approve_contract/<int:contract_id>', methods=['POST'])
 @login_required
 def approve_contract(contract_id):
     contract = Contract.query.get_or_404(contract_id)
 
     if contract.host_id != current_user.id:
-        abort(403)
+        abort(403)  # Restrict access to the host
 
     # Check if a file was uploaded
     if 'contract_file' not in request.files:
@@ -558,29 +604,37 @@ def approve_contract(contract_id):
     file = request.files['contract_file']
 
     # Ensure a file was selected
-    if file.filename == '':
+    if not file or file.filename == '':
         flash("No selected file.", "danger")
         return redirect(url_for('manage_contracts'))
 
     try:
-        # ✅ Ensure the directory exists
-        contract_folder = os.path.join(current_app.root_path, 'dormsys', 'static', 'contracts')
-        os.makedirs(contract_folder, exist_ok=True)
+        # ✅ Define the contract folder (from app config)
+        contract_folder = app.config.get('CONTRACT_FOLDER', os.path.join(app.root_path, 'static', 'contracts'))
+        os.makedirs(contract_folder, exist_ok=True)  # Ensure directory exists
 
-        # ✅ Generate a secure filename and save the file
+        # ✅ Generate a standard filename (contract_<contract_id>.pdf)
         filename = f"contract_{contract.id}.pdf"
         file_path = os.path.join(contract_folder, filename)
+
+        # ✅ Delete the old contract file if it exists
+        if contract.contract_file:
+            old_file_path = os.path.join(contract_folder, contract.contract_file)
+            if os.path.exists(old_file_path):
+                os.remove(old_file_path)
+
+        # ✅ Save the new contract file
         file.save(file_path)
 
-        # ✅ Set timezone (e.g., Asia/Manila or another relevant time zone)
-        local_tz = timezone('Asia/Manila')  # Change based on location
+        # ✅ Set timezone (Asia/Manila)
+        local_tz = timezone('Asia/Manila')
         utc_now = datetime.utcnow()
         local_time = utc_now.astimezone(local_tz)
 
         # ✅ Update contract status and store filename in DB
         contract.status = "Approved"
         contract.updated_at = local_time
-        contract.contract_file = filename  # Store filename only, not the full path
+        contract.contract_file = filename  # Store filename only
 
         # ✅ Set acceptance deadline (1 hour after approval in local timezone)
         contract.tenant_acceptance_deadline = local_time + timedelta(hours=1)
@@ -592,12 +646,14 @@ def approve_contract(contract_id):
             contract_id=contract.id
         )
         db.session.add(new_notification)
+
+        # ✅ Commit changes to the database
         db.session.commit()
 
         flash("Contract approved and uploaded successfully!", "success")
 
     except Exception as e:
-        db.session.rollback()
+        db.session.rollback()  # Rollback if any error occurs
         flash(f"Error approving contract: {str(e)}", "danger")
 
     return redirect(url_for('manage_contracts'))
@@ -687,13 +743,13 @@ def accept_contract(contract_id):
     # Ensure the contract has not expired
     if contract.tenant_acceptance_deadline and contract.tenant_acceptance_deadline < datetime.utcnow():
         flash("Contract acceptance period has expired.", "danger")
-        return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
+        return redirect(url_for('view_notifications'))
 
     # ✅ Mark the contract as accepted
     contract.tenant_accepted = True
     contract.status = "Signed"
 
-    # ✅ Set the start date to the current time and the end date to one year later
+    # ✅ Set the start and end dates
     contract.start_date = datetime.utcnow()
     contract.end_date = contract.start_date + timedelta(days=365)  # 1 year later
 
@@ -702,10 +758,13 @@ def accept_contract(contract_id):
     if property:
         property.tenant_id = contract.tenant_id  # Assign tenant to property
 
+    # ✅ Delete associated notifications
+    Notification.query.filter_by(user_id=current_user.id, contract_id=contract.id).delete()
+
     db.session.commit()
 
     flash("Contract successfully accepted! You are now a tenant.", "success")
-    return redirect(url_for('view_notifications'))  # ✅ FIX: Redirect to `view_notifications`
+    return redirect(url_for('view_notifications'))  # ✅ Redirect to notifications page
 
 @app.route('/manage_bookings', methods=['GET'])
 @login_required
@@ -784,25 +843,20 @@ def delete_booking(booking_id):
 def view_contract(contract_id):
     contract = Contract.query.get_or_404(contract_id)
 
-    # Ensure only the tenant can download the contract
+    # ✅ Ensure only the tenant can download their contract
     if contract.tenant_id != current_user.id:
         abort(403)
 
-    # Check if the contract file exists
-    if not contract.contract_file:
-        flash("No contract file available.", "danger")
-        return redirect(url_for('notifications'))
-
-    # Define the correct contract folder path
-    contract_folder = os.path.join(current_app.root_path, 'dormsys', 'static', 'contracts')
+    # ✅ Define contract folder
+    contract_folder = app.config['CONTRACT_FOLDER']
     contract_path = os.path.join(contract_folder, contract.contract_file)
 
-    # Verify the file exists
+    # ✅ Check if the contract file exists
     if not os.path.exists(contract_path):
         flash("Contract file is missing.", "danger")
         return redirect(url_for('notifications'))
 
-    # Serve the file as a download
+    # ✅ Serve the file as a download
     return send_from_directory(contract_folder, contract.contract_file, as_attachment=True)
 
 # Allowed extensions for profile pictures
@@ -843,14 +897,34 @@ def allowed_file(filename):
 @login_required
 def profile():
     if request.method == 'POST':
-        # Update User Information
-        current_user.username = request.form.get('username')
-        current_user.email = request.form.get('email')
-        current_user.phone_number = request.form.get('phone_number')
-        current_user.address = request.form.get('address')
+        print(f"DEBUG: Received Form Data - {request.form}")  # Debugging log
 
-        # Update Password (if provided)
+        # Get form data
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        phone_number = request.form.get('phone_number', '').strip()
+        address = request.form.get('address', '').strip()
         new_password = request.form.get('new_password')
+
+        # Debugging log to check if Flask is receiving email
+        print(f"DEBUG: Extracted Email - {email}")
+
+        # Validate required fields (Prevent NULL values)
+        if not email:
+            flash("Email cannot be empty!", "danger")
+            return redirect(url_for('profile'))
+        
+        if not username:
+            flash("Username cannot be empty!", "danger")
+            return redirect(url_for('profile'))
+
+        # Update user fields safely
+        current_user.username = username
+        current_user.email = email
+        current_user.phone_number = phone_number or current_user.phone_number
+        current_user.address = address or current_user.address
+
+        # Update password if provided
         if new_password:
             current_user.password_hash = generate_password_hash(new_password)
 
@@ -860,28 +934,23 @@ def profile():
             if profile_picture and allowed_file(profile_picture.filename):
                 filename = secure_filename(profile_picture.filename)
 
-                # Use the absolute path to save the file inside 'dormsys/static/display_pictures'
-                file_path = os.path.join(os.getcwd(), 'dormsys', 'static', 'display_pictures', filename)  # Updated path
-
-                # Save the image to the correct folder
+                # Save in the correct folder
+                file_path = os.path.join(current_app.root_path, 'dormsys', 'static', 'display_pictures', filename)
                 profile_picture.save(file_path)
-                current_user.profile_picture = filename  # Update user's profile picture field
 
-        db.session.commit()
-        flash("Profile updated successfully!", "success")
+                # Update user's profile picture field
+                current_user.profile_picture = filename
+
+        try:
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating profile: {str(e)}", "danger")
+
         return redirect(url_for('profile'))
 
     return render_template('profile.html')
-
-# @app.route('/debug_notifications')
-# @login_required
-# def debug_notifications():
-#     from dormsys.models import Notification
-#     notifications = Notification.query.all()
-#     output = []
-#     for n in notifications:
-#         output.append(f"Notification ID: {n.id}, Contract ID: {n.contract_id}")
-#     return "<br>".join(output)
 
 @app.route('/manage_tenants', methods=['GET'])
 @login_required
@@ -912,45 +981,29 @@ def remove_tenant(contract_id):
 
     contract = Contract.query.get_or_404(contract_id)
 
-    # Ensure the contract belongs to a property owned by the host
+    # ✅ Ensure the contract belongs to the host
     if contract.property.user_id != current_user.id:
         abort(403)
 
     try:
-        # Reset tenant_id in Property table
-        property = Property.query.get(contract.property_id)
-        if property:
-            property.tenant_id = None  # Remove tenant from property
+        # ✅ Delete contract file if it exists
+        contract_folder = app.config['CONTRACT_FOLDER']
+        contract_path = os.path.join(contract_folder, contract.contract_file)
 
-        # Update contract status
-        contract.status = "Terminated"
+        if os.path.exists(contract_path):
+            os.remove(contract_path)
 
+        # ✅ Remove the contract record from the database
+        db.session.delete(contract)
         db.session.commit()
-        flash("Tenant removed successfully.", "success")
+
+        flash("Tenant removed and contract deleted successfully.", "success")
 
     except Exception as e:
         db.session.rollback()
         flash(f"Error removing tenant: {str(e)}", "danger")
 
     return redirect(url_for('manage_tenants'))
-
-# Example route to handle property rating
-# @app.route('/rate_property/<int:property_id>', methods=['POST'])
-# @login_required
-# def rate_property(property_id):
-#     rating = request.form.get('rating')
-#     property = Property.query.get(property_id)
-    
-#     if property:
-#         tenant_rating = TenantRating(property_id=property.id, user_id=current_user.id, rating=rating)
-#         db.session.add(tenant_rating)
-#         db.session.commit()
-#         flash('Your rating has been submitted!', 'success')
-#     else:
-#         flash('Property not found!', 'danger')
-    
-#     return redirect(url_for('tenant_dashboard'))
-
 
 
 if __name__ == '__main__':
