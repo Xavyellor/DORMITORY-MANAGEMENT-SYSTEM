@@ -6,16 +6,16 @@ from wtforms.validators import DataRequired,Email,EqualTo
 from wtforms import ValidationError
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()], render_kw={"placeholder": "Email Address"})
+    password = PasswordField('Password', validators=[DataRequired()], render_kw={"placeholder": "Password"})
     role = RadioField('Role', choices=[('Host', 'Host'), ('Tenant', 'Tenant')], validators=[DataRequired()])
     submit = SubmitField('Log In')
 
 class RegistrationForm(FlaskForm):
-    email = StringField('Email',validators=[DataRequired(),Email()])
-    username = StringField('Username',validators=[DataRequired()])
-    password = PasswordField('Password',validators=[DataRequired(),EqualTo('pass_confirm',message='Passwords must match!')])
-    pass_confirm = PasswordField('Confirm Password', validators=[DataRequired()])
+    email = StringField('Email',validators=[DataRequired(),Email()], render_kw={"placeholder": "Email Address"})
+    username = StringField('Username',validators=[DataRequired()], render_kw={"placeholder": "Username"})
+    password = PasswordField('Password',validators=[DataRequired(),EqualTo('pass_confirm',message='Passwords must match!')], render_kw={"placeholder": "Password"})
+    pass_confirm = PasswordField('Confirm Password', validators=[DataRequired()], render_kw={"placeholder": "Confirm Password"})
     role = RadioField('Role', choices=[('Host', 'Host'), ('Tenant', 'Tenant')], validators=[DataRequired()])  # Add the role field
     submit = SubmitField('Register!')
 

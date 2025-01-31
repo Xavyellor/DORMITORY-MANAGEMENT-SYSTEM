@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5">
+<div class="">
      <!-- Dashboard Header -->
-     <div class="d-flex justify-content-between align-items-center mb-5">
-        <h1 class="display-5">Welcome, {{ current_user.username }}</h1>
-        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addListingModal">
+     <div class="header-section-host">
+        <h1>WELCOME, {{ current_user.username }}!</h1>
+        <button class="add-btn-host" data-bs-toggle="modal" data-bs-target="#addListingModal">
             + Add New Property
         </button>
     </div>
@@ -14,7 +14,7 @@
     <div class="row mb-5">
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
-                <div class="card-body">
+                <div class="card-body-host">
                     <h2 class="card-title">{{ properties|length }}</h2>
                     <p class="card-text">Total Properties</p>
                 </div>
@@ -22,7 +22,7 @@
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
-                <div class="card-body">
+                <div class="card-body-host">
                     <h2 class="card-title">{{ tenant_count }}</h2>
                     <p class="card-text">Current Tenants</p>
                 </div>
@@ -30,7 +30,7 @@
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center">
-                <div class="card-body">
+                <div class="card-body-host">
                     <h2 class="card-title">
                         {{ bookings|selectattr("status", "equalto", "Pending")|list|length }}
                     </h2>
@@ -40,13 +40,15 @@
         </div>
     </div>
 
+    <hr width="100%" size="2">
+
     <!-- Property Listings Section -->
-    <h2 class="mb-4">Your Properties</h2>
+    <h2 class="your-properties-txt">Your Properties</h2>
     <div class="row">
         {% if properties %}
             {% for property in properties %}
                 <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="prop-overview-host">
                         <!-- Property Image -->
                         <div id="carousel{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
                             <div class="carousel-inner">
@@ -55,7 +57,7 @@
                                     {% for img in images %}
                                     <div class="carousel-item {% if loop.first %}active{% endif %}">
                                         <img src="{{ url_for('static', filename='uploads/' + img) }}" 
-                                             class="d-block w-100"
+                                             class="prop-img"
                                              alt="{{ property.title }}" 
                                              style="height: 200px; object-fit: cover;">
                                     </div>
@@ -63,7 +65,7 @@
                                 {% else %}
                                     <div class="carousel-item active">
                                         <img src="{{ url_for('static', filename='uploads/default_image.jpg') }}" 
-                                             class="d-block w-100"
+                                             class="prop-img"
                                              alt="Default Property Image" 
                                              style="height: 200px; object-fit: cover;">
                                     </div>
@@ -80,9 +82,9 @@
                         </div>
 
                         <!-- Property Details -->
-                        <div class="card-body">
-                            <h5 class="card-title text-truncate">{{ property.title }}</h5>
-                            <p class="text-muted text-truncate mb-2"><i class="bi bi-geo-alt"></i> {{ property.location }}</p>
+                        <div class="card-body-host-view">
+                            <h5>{{ property.title }}</h5>
+                            <p class=""><i class="bi bi-geo-alt"></i> {{ property.location }}</p>
                             <p><strong>Price:</strong> ${{ property.price }}</p>
                             <p><strong>Status:</strong> 
                                 {% if property.status == 'Available' %}
@@ -96,10 +98,10 @@
                         </div>
 
                         <!-- Property Actions -->
-                        <div class="card-footer d-flex justify-content-between">
-                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editPropertyModal{{ property.id }}">Edit</button>
+                        <div class="action-section">
+                            <button class="edit-btn-host" data-bs-toggle="modal" data-bs-target="#editPropertyModal{{ property.id }}">Edit</button>
                             <form action="{{ url_for('delete_property', id=property.id) }}" method="POST">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                <button type="submit" class="delete-btn-host">Delete</button>
                             </form>
                         </div>
                     </div>

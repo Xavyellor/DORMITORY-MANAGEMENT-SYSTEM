@@ -1,120 +1,133 @@
-/* Search Bar Container */
-.search-container {
+
+.search-box-home {
+    background-color: #748CAB;
+    margin-right: 12px;
+    border-radius: 10px;
+    width: 300px;
+    height: 90px;
+}
+
+.search-box-home label {
+    margin-left: 15px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: white;
+}
+
+
+.search-box-home input{
+    background-color: #8eacd3;
+    border: none;
+    width: 275px;
+}
+
+.search-btn {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px; /* Space between fields */
-    background-color: #f4f4f4;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Search Field */
-.search-field {
+.submit-btn {
+    width: 100px;
+    height: 65px;
+    padding: 12px;
+    border-radius: 15px;
+    border: none;
+    background: #1D2D44;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.submit-btn label {
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background: #3E5C76;
+    box-shadow: 0 0 12px black;
+}
+
+.prop-overview-home {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    border: solid;
+    border-width: 1px;
+    border-radius: 20px;
     padding: 10px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-height: 480px;
+    background-color: whitesmoke;
+    
 }
 
-.search-field label {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-.search-field input {
-    width: 200px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-/* Search Button */
-.search-btn {
-    padding: 10px 20px;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    font-weight: bold;
-    align-self: center; /* Ensures alignment with other fields */
-}
-
-.search-btn:hover {
-    background-color: #5a6268;
-}
-/* Section Title */
-h2 {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 24px;
-    color: #333;
-}
-
-/* Property Listings Container */
-#property-listings {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Property Card */
-.property-card {
-    padding: 15px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-/* Property Card Hover Effect */
-.property-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Property Details */
-.property-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.property-description {
-    color: #555;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
-
-.property-price,
-.property-location,
-.property-capacity,
-.property-amenities,
-.property-owner {
-    margin: 5px 0;
-    font-size: 14px;
-    color: #444;
-}
-.card img {
+.prop-img {
+    border-radius: 15px;
     width: 100%;
-    height: 200px; /* Adjust this value based on your layout */
-    object-fit: cover; /* Ensures the image fits without distortion */
 }
 
+.card-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+}
 
+.card-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.card-body p {
+    color: #6c757d;
+    font-size: 15px;
+    margin-top: 5px;
+}
+
+.view-btn {
+    width: 150px;
+    height: 50px;
+    color: white;
+    display: block;
+    border-radius: 20px;
+    border: none;
+    background: #1D2D44;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.view-section {
+    justify-self: start;
+    margin: 10px;
+}
+
+.view-btn:hover {
+    background: #3E5C76;
+    box-shadow: 0 0 12px black;
+}
+
+.group-btn-tenant {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mb-3-tenant {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.mb-3-tenant label {
+    margin-left: 8px;
+    width: 200px;
+    font-weight: 700;
+}
+
+.modal-header h5 {
+    font-weight: 700;
+}
 

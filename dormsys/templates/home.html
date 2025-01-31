@@ -102,7 +102,7 @@
     }
 </style>
 
-<div class="container mt-5">
+<div>
     <!-- Hero Section (Full Width Inside Content) -->
     <div class="hero-section">
         <img src="{{ url_for('static', filename='assets/header 2.png') }}" alt="Student Dormitory">
@@ -114,23 +114,23 @@
             {{ form.hidden_tag() }}
             <div class="d-flex justify-content-center">
                 <!-- Where (Location) Field -->
-                <div class="search-box">
-                    {{ form.query.label(class="form-label") }}
+                <div class="search-box-home">
+                    {{ form.query.label(class="") }}
                     {{ form.query(class="form-control", placeholder="Search by title or location") }}
                 </div>
                 <!-- Budget (Price) Field -->
-                <div class="search-box">
-                    <label for="budget" class="form-label">Budget</label>
+                <div class="search-box-home">
+                    <label for="budget" class="">Budget</label>
                     <input type="number" class="form-control" id="budget" name="budget" placeholder="Set a maximum budget">
                 </div>
                 <!-- Capacity (Number of Beds) Field -->
-                <div class="search-box">
-                    <label for="capacity" class="form-label">Capacity</label>
+                <div class="search-box-home">
+                    <label for="capacity" class="">Capacity</label>
                     <input type="number" class="form-control" id="capacity" name="capacity" placeholder="Number of beds">
                 </div>
                 <!-- Search Button -->
-                <div class="btn-wrapper">
-                    <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+                <div class="search-btn">
+                    <button type="submit" class="submit-btn">{{ form.submit.label }}</button>
                 </div>
             </div>
         </form>
@@ -141,7 +141,7 @@
         {% if properties %}
             {% for property in properties %}
                 <div class="col-md-4 mb-4">
-                    <div class="card h-100">
+                    <div class="prop-overview-home">
                         
                         <!-- ✅ Property Image Carousel -->
                         <div id="carousel{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
@@ -151,7 +151,7 @@
                                     {% for img in images %}
                                     <div class="carousel-item {% if loop.first %}active{% endif %}">
                                         <img src="{{ url_for('static', filename='uploads/' + img) }}" 
-                                             class="d-block w-100"
+                                             class="prop-img"
                                              alt="{{ property.title }}" 
                                              style="height: 200px; object-fit: cover;">
                                     </div>
@@ -159,7 +159,7 @@
                                 {% else %}
                                     <div class="carousel-item active">
                                         <img src="{{ url_for('static', filename='uploads/default_image.jpg') }}" 
-                                             class="d-block w-100"
+                                             class="prop-img"
                                              alt="Default Property Image" 
                                              style="height: 200px; object-fit: cover;">
                                     </div>
@@ -178,13 +178,17 @@
                         </div>
 
                         <!-- Property Overview -->
-                        <div class="card-body">
+                           <!-- Property Overview -->
+                           <div class="card-body">
                             <h5 class="card-title">{{ property.title }}</h5>
                             <p><strong>Price:</strong> ${{ property.price }}</p>
                             <p><strong>Location:</strong> {{ property.location }}</p>
-                            <button class="btn btn-primary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#propertyModal{{ property.id }}">
+                        </div>
+
+                        <div class="view-section">
+                            <button class="view-btn" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#propertyModal{{ property.id }}">
                                 View Details
                             </button>
                         </div>
@@ -217,11 +221,14 @@
                                     {% endif %}
                                 </p>
 
+                                <hr width="100%">
+
                                 <!-- Booking Form -->
                                 {% if current_user.is_authenticated and current_user.role == 'Tenant' %}
+                                <div class="group-btn-tenant">
                                     <form method="POST" action="{{ url_for('book_property', property_id=property.id) }}">
                                         {{ form.hidden_tag() }}
-                                        <div class="mb-3">
+                                        <div class="mb-3-tenant">
                                             {{ form.date.label(class="form-label") }}
                                             {{ form.date(class="form-control") }}
                                         </div>
@@ -239,6 +246,8 @@
                                         <input type="hidden" name="property_id" value="{{ property.id }}">
                                         <button type="submit" class="btn btn-primary">Request Contract</button>
                                     </form>
+                                </div>
+
                                 {% else %}
                                     <p class="text-muted">Log in as a tenant to book a viewing.</p>
                                 {% endif %}

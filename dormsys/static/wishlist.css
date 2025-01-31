@@ -1,0 +1,39 @@
+.prop-overview-wishlist {
+    display: flex;
+    flex-direction: column;
+    border: solid;
+    border-width: 1px;
+    border-radius: 20px;
+    padding: 10px;
+    min-height: 400px;
+    background-color: whitesmoke;
+}
+
+.wishlist-heading {
+    font-weight: 700;
+    align-self: center;
+    justify-self: center;
+    margin: 0;
+}
+
+.action-btn-wishlist {
+    display: flex;
+    margin: 10px;
+    justify-content: space-between;
+}
+
+.remove-btn-wishlist {
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    background-color: red;
+    border-radius: 8px;
+}
+
+.view-btn-wishlist {
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    background-color: blue;
+    border-radius: 8px;
+}

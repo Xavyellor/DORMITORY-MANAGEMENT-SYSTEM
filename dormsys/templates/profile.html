@@ -1,46 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-5">
-    <h2 class="text-primary mb-4">Profile Settings</h2>
+<div class="profile-content">
+    <h2 class="heading-txt-profile">PROFILE SETTING</h2>
+    <hr width="100%">
+
+    <!-- Display Profile Picture -->
+    <img src="{{ url_for('static', filename='display_pictures/' + (current_user.profile_picture if current_user.profile_picture else 'default.jpeg')) }}" alt="Profile Picture" class="dp-image" width="180">
     
     <form method="POST" enctype="multipart/form-data">
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">Username</label>
             <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
         </div>
         
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">Email</label>
             <input type="email" name="email" class="form-control" value="{{ current_user.email }}" required>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">Phone Number</label>
             <input type="text" name="phone_number" class="form-control" value="{{ current_user.phone_number }}">
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">Address</label>
             <input type="text" name="address" class="form-control" value="{{ current_user.address }}">
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">New Password (Leave blank to keep current)</label>
             <input type="password" name="new_password" class="form-control">
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3-profile">
             <label class="form-label">Profile Picture</label>
             <input type="file" name="profile_picture" class="form-control">
         </div>
 
-        <button type="submit" class="btn btn-primary">Update Profile</button>
-    </form>
+        <div class="mb-3-profile-btn">
+            <button type="submit" class="update-btn-profile">Update Profile</button>
+        </div>
 
-    <!-- Display Profile Picture -->
-    <h3 class="mt-4">Profile Picture</h3>
-    <img src="{{ url_for('static', filename='display_pictures/' + (current_user.profile_picture if current_user.profile_picture else 'default.jpeg')) }}" alt="Profile Picture" class="img-fluid" width="200">
+    </form>
 </div>
 
 {% endblock %}

@@ -1,0 +1,258 @@
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* Sidebar */
+#sidebar {
+    height: 100vh;
+    width: 250px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: #1D2D44;
+    color: white;
+    padding-top: 1rem;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar h2 {
+    color: white;
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#sidebar a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    margin: 5px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+#sidebar a:hover {
+    background: #495057;
+    transform: translateX(5px);
+
+}
+
+#sidebar a i {
+    font-size: 1.25rem;
+    margin-right: 10px;
+    transition: margin-right 0.3s ease;
+}
+
+.logo-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.logo {
+    margin: 0;
+}
+
+.logo img {
+    width: 50px;
+}
+
+.branding-s {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    position: relative;
+    color: white;
+}
+
+.branding h1 {
+    margin-left: 10px;
+    font-size: 20px;
+    width: 150px;
+    margin-bottom: 5px;
+}
+
+.logoT {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+/* Main Container */
+.container {
+    display: flex;
+    flex: 1;
+    margin-left: 250px; /* Space for sidebar */
+    width: calc(100% - 250px);
+}
+
+/* Left Panel (Branding + Image) */
+.left-panel {
+    flex: .7;
+    background: url('assets/because\ every\ student\ deserves\ a\ perfect\ space.png') no-repeat center center/cover;
+    position: relative;
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    text-align: center;
+}
+
+.overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+
+.tagline {
+    font-size: 14px;
+}
+
+/* Right Panel (Login Form) */
+.right-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #E0E1DD;
+}
+
+.login-box {
+    width: 500px;
+    padding: 20px;
+    text-align: center;
+}
+
+.login-box p {
+    margin-bottom: 10px;
+}
+/* Heading */
+h3 {
+    font-size: 30px;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 20px;
+}
+
+/* Form Fields */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+    justify-self: center;
+}
+
+.form-label {
+    font-weight: bold;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.input-field {
+    width: 400px;
+    padding: 12px;
+    border-radius: 25px;
+    border: 1px solid #ccc;
+    background: #748CAB;
+    outline: none;
+    font-size: 16px;
+}
+
+.form-group ::placeholder {
+    color: black;
+    padding: 8px;
+}
+
+/* Role Selection */
+.role-selection {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 25px;
+    margin-bottom: 8px;
+}
+
+.role-option {
+    text-align: center;
+}
+
+.role-option input {
+    display: none;
+}
+
+.role-option label {
+    width: 200px;
+    margin: 8px;
+    color: white;
+    display: block;
+    padding: 12px;
+    border-radius: 25px;
+    border: none;
+    background: #1D2D44;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.role-option input:hover + label {
+    background-color: #3E5C76;
+    box-shadow: 0 0 12px black;
+    color: white;
+}
+
+.role-option input:checked + label {
+    background-color: #3E5C76;
+    box-shadow: 0 0 12px black;
+    color: white;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 250px;
+    padding: 12px;
+    border-radius: 25px;
+    border: none;
+    background: #1D2D44;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.submit-btn:hover {
+    background: #3E5C76;
+    box-shadow: 0 0 12px black;
+}
+
+/* Sign-up Link */
+.message {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+.message a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.message a:hover {
+    text-decoration: underline;
+}

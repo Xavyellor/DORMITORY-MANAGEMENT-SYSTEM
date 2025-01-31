@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="mb-4">Your Wishlist</h1>
-
+<div class="">
+    <h1 class="wishlist-heading">Your Wishlist</h1>
+    <hr width="100%">
     <div class="row">
         {% if wishlist %}
             {% for item in wishlist %}
                 <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="prop-overview-wishlist">
                         <!-- Property Image -->
                         <img src="{{ url_for('static', filename='uploads/' ~ (item.property.images.split(', ')[0] if item.property.images else 'default_image.jpg')) }}" 
-                             class="card-img-top"
+                             class="prop-img"
                              alt="{{ item.property.title }}"
                              style="height: 200px; object-fit: cover;">
 
@@ -30,13 +30,17 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="card-footer d-flex justify-content-between">
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#propertyModal{{ item.property.id }}">
-                                View Details
-                            </button>
-                            <form method="POST" action="{{ url_for('remove_from_wishlist', wishlist_id=item.id) }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                            </form>
+                        <div class="action-btn-wishlist">
+                            <div>
+                                <button class="view-btn-wishlist" data-bs-toggle="modal" data-bs-target="#propertyModal{{ item.property.id }}">
+                                    View Details
+                                </button>
+                            </div>
+                            <div>
+                                <form method="POST" action="{{ url_for('remove_from_wishlist', wishlist_id=item.id) }}">
+                                    <button type="submit" class="remove-btn-wishlist">Remove</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
