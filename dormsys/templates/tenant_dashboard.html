@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="main-tenant">
+        <h2 class="title-header-tenant">YOUR CONTACT INFORMATION</h2>
+
+        <!-- Property and Host Information Card Combined -->
+        <div class="top-section-tenant">
+            <div class="card-header-tenant">
+                <h4>Property and Host Information</h4>
+            </div>
+            <hr width="100%">
+            <div class="card-body">
+                <div class="row">
+                    <!-- Property Information Section -->
+                    <div class="property-info-box">
+                        <div class="left-section-tenant">
+                            <h5>{{ property.title }}</h5>
+                            <p><strong>Location:</strong> {{ property.location }}</p>
+                            <p><strong>Status:</strong> {{ property.status }}</p>
+                            <p><strong>Price:</strong> ${{ property.price }}/month</p>
+                        </div>
+                        <div class="vl"></div>
+                        <div class="right-section-tenant">
+                            <p><strong>Amenities:</strong> {{ property.amenities }}</p>
+                            <p><strong>Host Name:</strong> {{ host.username }}</p>
+                            <p><strong>Contact:</strong> {{ host.phone_number }}</p>
+                        </div>
+                        <div class="vl"></div>
+                        <div class="contact-btn-section"> 
+                            <button class="contact-btn" onclick="window.location.href='mailto:{{ host.email }}'">Contact Host</button>
+                        </div>
+                    </div>
+                
+                <hr width="100%">
+                <!-- Property Images Collage -->
+                <div class="row mt-4" class="image-box">
+                    {% if property.images %}
+                        {% set images = property.images.split(', ') %}
+                        {% for img in images %}
+                            <div class="col-md-4 mb-3">
+                                <div class="image-collage">
+                                    <img src="{{ url_for('static', filename='uploads/' + img) }}" class="img-fluid" alt="{{ property.title }}">
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-md-4 mb-3">
+                            <div class="image-collage">
+                                <img src="{{ url_for('static', filename='uploads/default_image.jpg') }}" class="img-fluid" alt="Default Property Image">
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="second-section">
+<!-- Other Tenants Card -->
+<div class="mid-section-tenant">
+    <div class="card-header-tenant">
+        <h4>Other Tenants</h4>
+    </div>
+    <hr width="100%">
+    <div class="card-body-mid-tenant">
+        <ul>
+            <!-- Show the current tenant -->
+            <li class="d-flex align-items-center mb-3">
+                <div class="profile-picture">
+                    <img src="{{ url_for('static', filename='display_pictures/' + (current_user.profile_picture if current_user.profile_picture else 'default.jpeg')) }}" alt="Profile Picture" class="profile-img" width="150" height="150">
+                </div>
+                <div class="tenant-info ms-3">
+                    <strong>Tenant Name:</strong> {{ current_user.username }}<br>
+                    <strong>Email:</strong> {{ current_user.email }}<br>
+                    <strong>Phone Number:</strong> {{ current_user.phone_number }}<br>
+
+                    {% set current_tenant_contract = current_user.contracts[0] if current_user.contracts else None %}
+    
+                    <strong>Contract Start Date:</strong> 
+                    {% if current_tenant_contract %}
+                        {{ current_tenant_contract.start_date.strftime('%Y-%m-%d') if current_tenant_contract.start_date else 'N/A' }}<br>
+                    {% else %}
+                        N/A<br>
+                    {% endif %}
+    
+                    <strong>Contract End Date:</strong> 
+                    {% if current_tenant_contract %}
+                        {{ current_tenant_contract.end_date.strftime('%Y-%m-%d') if current_tenant_contract.end_date else 'N/A' }}<br>
+                    {% else %}
+                        N/A<br>
+                    {% endif %}
+                </div>
+            </li>
+            <hr width="100%">
+
+            <!-- Show other tenants -->
+            {% for tenant_data in tenants %}
+                <li class="d-flex align-items-center mb-3">
+                    <div class="profile-picture">
+                        <img src="{{ url_for('static', filename='display_pictures/' + (tenant_data.profile_picture if tenant_data.profile_picture else 'default.jpeg')) }}" alt="Profile Picture" class="profile-img">
+                    </div>
+                    <div class="tenant-info ms-3">
+                        <strong>Tenant Name:</strong> {{ tenant_data.username }}<br>
+                        <strong>Email:</strong> {{ tenant_data.email }}<br>
+                        <strong>Phone Number:</strong> {{ tenant_data.phone_number }}<br>
+
+                        {% set tenant_contract = tenant_data.contracts[0] if tenant_data.contracts else None %}
+        
+                        <strong>Contract Start Date:</strong> 
+                        {% if tenant_contract %}
+                            {{ tenant_contract.start_date.strftime('%Y-%m-%d') if tenant_contract.start_date else 'N/A' }}<br>
+                        {% else %}
+                            N/A<br>
+                        {% endif %}
+        
+                        <strong>Contract End Date:</strong> 
+                        {% if tenant_contract %}
+                            {{ tenant_contract.end_date.strftime('%Y-%m-%d') if tenant_contract.end_date else 'N/A' }}<br>
+                        {% else %}
+                            N/A<br>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Contract Start and End Dates -->
+<div class="bottom-section-tenant">
+    <div class="card-header-tenant">
+        <h4>Your Contract Dates</h4>
+    </div>
+    <hr width="100%">
+    <div class="card-body">
+        <p><strong>Start Date:</strong> {{ contract.start_date.strftime('%Y-%m-%d') if contract.start_date else 'N/A' }}</p>
+        <p><strong>End Date:</strong> {{ contract.end_date.strftime('%Y-%m-%d') if contract.end_date else 'N/A' }}</p>
+    </div>
+</div>
+
+
+</div>
+        
+
+
+    <!-- Custom CSS for the Image Collage and Profile Picture -->
+    <style>
+        /* Custom style for the collage images */
+        .image-collage {
+            position: relative;
+            width: 100%;
+            height: 200px; /* Adjust height as needed */
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .image-collage img {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Styling for Profile Picture in Tenant Card */
+        .profile-picture img {
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .tenant-info {
+            padding-left: 10px;
+        }
+    </style>
+{% endblock %}
+
+
+
+
+
+
+

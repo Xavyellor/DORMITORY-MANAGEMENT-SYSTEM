@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="">
+     <!-- Dashboard Header -->
+     <div class="header-section-host">
+        <h1>WELCOME, {{ current_user.username }}!</h1>
+        <button class="add-btn-host" data-bs-toggle="modal" data-bs-target="#addListingModal">
+            + Add New Property
+        </button>
+    </div>
+
+    <!-- Dashboard Summary Section -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body-host">
+                    <h2 class="card-title">{{ properties|length }}</h2>
+                    <p class="card-text">Total Properties</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body-host">
+                    <h2 class="card-title">{{ tenant_count }}</h2>
+                    <p class="card-text">Current Tenants</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body-host">
+                    <h2 class="card-title">
+                        {{ bookings|selectattr("status", "equalto", "Pending")|list|length }}
+                    </h2>
+                    <p class="card-text">Pending Bookings</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr width="100%" size="2">
+
+    <!-- Property Listings Section -->
+    <h2 class="your-properties-txt">Your Properties</h2>
+    <div class="row">
+        {% if properties %}
+            {% for property in properties %}
+                <div class="col-md-4 mb-4">
+                    <div class="prop-overview-host">
+                        <!-- Property Image -->
+                        <div id="carousel{{ property.id }}" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% if property.images %}
+                                    {% set images = property.images.split(', ') %}
+                                    {% for img in images %}
+                                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                        <img src="{{ url_for('static', filename='uploads/' + img) }}" 
+                                             class="prop-img"
+                                             alt="{{ property.title }}" 
+                                             style="height: 200px; object-fit: cover;">
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="carousel-item active">
+                                        <img src="{{ url_for('static', filename='uploads/default_image.jpg') }}" 
+                                             class="prop-img"
+                                             alt="Default Property Image" 
+                                             style="height: 200px; object-fit: cover;">
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ property.id }}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ property.id }}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+
+                        <!-- Property Details -->
+                        <div class="card-body-host-view">
+                            <h5>{{ property.title }}</h5>
+                            <p class=""><i class="bi bi-geo-alt"></i> {{ property.location }}</p>
+                            <p><strong>Price:</strong> ${{ property.price }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if property.status == 'Available' %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unavailable</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Number of Beds:</strong> {{ property.num_beds }}</p>
+                            <p><strong>Amenities:</strong> {{ property.amenities }}</p>
+                        </div>
+
+                        <!-- Property Actions -->
+                        <div class="action-section">
+                            <button class="edit-btn-host" data-bs-toggle="modal" data-bs-target="#editPropertyModal{{ property.id }}">Edit</button>
+                            <form action="{{ url_for('delete_property', id=property.id) }}" method="POST">
+                                <button type="submit" class="delete-btn-host">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Property Modal -->
+                <div class="modal fade" id="editPropertyModal{{ property.id }}" tabindex="-1" aria-labelledby="editPropertyLabel{{ property.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editPropertyLabel{{ property.id }}">Edit Property: {{ property.title }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('edit_property', id=property.id) }}" enctype="multipart/form-data">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editTitle{{ property.id }}" class="form-label">Property Title</label>
+                                                <input type="text" id="editTitle{{ property.id }}" name="title" class="form-control" value="{{ property.title }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editDescription{{ property.id }}" class="form-label">Description</label>
+                                                <textarea id="editDescription{{ property.id }}" name="description" class="form-control" required>{{ property.description }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editPrice{{ property.id }}" class="form-label">Price</label>
+                                                <input type="number" id="editPrice{{ property.id }}" name="price" class="form-control" value="{{ property.price }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="location" class="form-label">Location</label>
+                                                <input type="text" id="location" name="location" class="form-control" required placeholder="Enter an address">
+                                                <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
+                                            </div>
+                                            
+                                            <!-- Hidden fields for latitude and longitude -->
+                                            <input type="hidden" id="latitude" name="latitude">
+                                            <input type="hidden" id="longitude" name="longitude">
+                                            <div class="mb-3">
+                                                <label for="editNumBeds{{ property.id }}" class="form-label">Number of Beds</label>
+                                                <input type="number" id="editNumBeds{{ property.id }}" name="num_beds" class="form-control" value="{{ property.num_beds }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Amenities</label>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    {% for amenity in ['Wi-Fi', 'Air Conditioning', 'Television', 'Parking', 'Laundry'] %}
+                                                        <div class="form-check">
+                                                            <input type="checkbox" class="form-check-input" id="editAmenity{{ amenity }}{{ property.id }}" name="amenities" value="{{ amenity }}" 
+                                                            {% if amenity in property.amenities %}checked{% endif %}>
+                                                            <label class="form-check-label" for="editAmenity{{ amenity }}{{ property.id }}">{{ amenity }}</label>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editStatus{{ property.id }}" class="form-label">Status</label>
+                                                <select id="editStatus{{ property.id }}" name="status" class="form-select">
+                                                    <option value="Available" {% if property.status == 'Available' %}selected{% endif %}>Available</option>
+                                                    <option value="Unavailable" {% if property.status == 'Unavailable' %}selected{% endif %}>Unavailable</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Save Changes</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted text-center">You don't have any properties listed. Add one to get started!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Listing Modal -->
+<div class="modal fade" id="addListingModal" tabindex="-1" aria-labelledby="addListingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addListingModalLabel">Add New Property</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="propertyForm" method="POST" action="{{ url_for('add_listing') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Property Title</label>
+                        <input type="text" id="title" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="images" class="form-label">Property Images</label>
+                        <input type="file" id="images" name="images" class="form-control" multiple>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" name="description" class="form-control" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" id="price" name="price" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" id="location" name="location" class="form-control" required placeholder="Enter an address">
+                        <ul id="suggestions" class="list-group position-absolute" style="z-index: 1000; display: none;"></ul>
+                    </div>
+                    
+                    <!-- Hidden fields for latitude and longitude -->
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+
+                    <div class="mb-3">
+                        <label for="num_beds" class="form-label">Number of Beds</label>
+                        <input type="number" id="num_beds" name="num_beds" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amenities</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            {% for amenity in ['Wi-Fi', 'Air Conditioning', 'Television', 'Parking', 'Laundry'] %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="amenity{{ amenity }}" name="amenities" value="{{ amenity }}">
+                                    <label class="form-check-label" for="amenity{{ amenity }}">{{ amenity }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Listing</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='host_dashboard.js') }}"></script>
+
+{% endblock %}

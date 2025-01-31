@@ -1,33 +1,229 @@
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="static/home.css">
+    <link rel="stylesheet" href="static/host_dashboard.css">
+    <link rel="stylesheet" href="static/tenant_dashboard.css">
+    <link rel="stylesheet" href="static/wishlist.css">
+    <link rel="stylesheet" href="static/profile.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../static/base.css">
-    <link rel="stylesheet" href="../static/style.css">
-    <title></title>
+    <title>Dorm Finder</title>
+    <style>
+        /* General Body Styles */
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #E0E1DD;
+        }
+
+        /* Sidebar Styles */
+        #sidebar {
+            height: 100vh;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #1D2D44;
+            color: white;
+            padding-top: 1rem;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 8px;
+        }
+        
+        .logo {
+            margin: 0;
+        }
+        
+        .logo img {
+            width: 50px;
+        }
+        
+        .branding-s {
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            position: relative;
+            color: white;
+        }
+        
+        .branding h1 {
+            margin-left: 10px;
+            font-size: 20px;
+            width: 150px;
+            margin-bottom: 5px;
+        }
+        
+        .logoT {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #f8f9fa;
+            font-weight: bold;
+            transition: opacity 0.3s ease;
+        }
+
+        #sidebar a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            margin: 5px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        #sidebar a:hover {
+            background: #495057;
+            transform: translateX(5px);
+        }
+
+        /* Sidebar Collapsed State */
+        #sidebar.expanded {
+            width: 80px;
+        }
+
+        #sidebar.expanded .branding {
+            display: none;
+        }
+
+        #sidebar.expanded .sidebar-text {
+            display: none; /* Hide text when collapsed */
+        }
+
+        #sidebar.expanded a {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        #sidebar.expanded a i {
+            margin-right: 0; /* Remove icon margin */
+            font-size: 1.5rem;
+        }
+
+        /* Sidebar Icons */
+        #sidebar a i {
+            font-size: 1.25rem;
+            margin-right: 10px;
+            transition: margin-right 0.3s ease;
+        }
+
+        /* Expand Button */
+        .expand-toggle {
+            position: absolute;
+            bottom: 20px;
+            right: 15px;
+            background: #495057;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 5px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Content Styles */
+        #content {
+            margin-left: 250px;
+            padding: 2rem;
+            width: calc(100% - 250px);
+            transition: margin-left 0.3s ease;
+        }
+
+        #content.expanded {
+            margin-left: 80px;
+            width: calc(100% - 80px);
+        }
+    </style>
+
 </head>
 <body>
-
-    <div id="nav">
-        <a href="{{url_for('home')}}">Home</a>
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="logo-section">
+            <div class="logo">
+                <img src="static/assets/dorm finder logo.png">
+            </div>
+            <div class="branding">
+                <h1 class="logoT">Dorm Finder</h1>
+            </div>
+        </div>
+        <a href="{{ url_for('home') }}" class="nav-item"><i class="bi bi-house"></i> <span class="sidebar-text">Home</span></a>
         {% if current_user.is_authenticated %}
-        <a href="{{url_for('dashboard')}}">Dashboard</a>
-        <a href="{{url_for('logout')}}">Logout</a>
+            {% if current_user.role == 'Host' %}
+                <a href="{{ url_for('host_dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> <span class="sidebar-text">Dashboard</span></a>
+                <a href="{{ url_for('manage_tenants') }}" class="nav-item"><i class="bi bi-building"></i><span class="sidebar-text">Tenants</span></a>
+                <a href="{{ url_for('manage_bookings') }}" class="nav-item"><i class="bi bi-building"></i><span class="sidebar-text">Manage Bookings</span></a>
+                <a href="{{ url_for('manage_contracts') }}" class="nav-item"><i class="bi bi-file-earmark-text"></i> <span class="sidebar-text">Manage Contracts</span></a>
+                <a href="#" class="nav-item disabled"><i class="bi bi-bell"></i> <span class="sidebar-text">Notifications</span></a>
+                <a href="{{ url_for('profile') }}" class="nav-item"><i class="bi bi-person"></i> <span class="sidebar-text">Profile Settings</span></a>
+            {% elif current_user.role == 'Tenant' %}
+                <a href="{{ url_for('tenant_dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> <span class="sidebar-text">Dashboard</span></a>
+                <a href="{{ url_for('view_wishlist') }}" class="nav-item"><i class="bi bi-heart"></i> <span class="sidebar-text">View Wishlist</span></a>
+                <a href="{{ url_for('view_notifications') }}" class="nav-item">
+                    <i class="bi bi-bell"></i> <span class="sidebar-text">Notifications</span>
+                    {% set unread_count = current_user.notifications | selectattr("is_read", "equalto", False) | list | length %}
+                    {% if unread_count > 0 %}
+                    <span class="badge bg-danger">{{ unread_count }}</span>
+                    {% endif %}
+                </a>                
+                <a href="{{ url_for('profile') }}" class="nav-item"><i class="bi bi-person"></i><span class="sidebar-text">Profile Settings</span></a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="nav-item"><i class="bi bi-box-arrow-right"></i><span class="sidebar-text">Logout</span> </a>
         {% else %}
-        <a href="{{url_for('login')}}">Log In</a>
-        <a href="{{url_for('register')}}">Register</a>
+            <a href="{{ url_for('login') }}" class="nav-item"><i class="bi bi-box-arrow-in-right"></i><span class="sidebar-text">Login</span></a>
+            <a href="{{ url_for('register') }}" class="nav-item"><i class="bi bi-person-plus"></i><span class="sidebar-text">Register</span></a>
         {% endif %}
-    </div>
-    
-    {% block content %}{% endblock %}
+        <button class="expand-toggle" onclick="toggleSidebar()">⟨⟩</button>
+    </nav>
 
-    <!-- JavaScript Section -->
-    <script src="{{ url_for('static', filename='base.js') }}"></script>
-    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
-    {% block scripts %}{% endblock %}
-    
+<!-- Main Content -->
+    <div id="content">
+        <!-- Flash Messages -->
+        <div class="container mt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const content = document.getElementById("content");
+            sidebar.classList.toggle("expanded");
+            content.classList.toggle("expanded");
+        }
+    </script>
 </body>
 </html>

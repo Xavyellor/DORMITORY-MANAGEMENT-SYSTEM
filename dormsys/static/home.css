@@ -1,0 +1,133 @@
+
+.search-box-home {
+    background-color: #748CAB;
+    margin-right: 12px;
+    border-radius: 10px;
+    width: 300px;
+    height: 90px;
+}
+
+.search-box-home label {
+    margin-left: 15px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: white;
+}
+
+
+.search-box-home input{
+    background-color: #8eacd3;
+    border: none;
+    width: 275px;
+}
+
+.search-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.submit-btn {
+    width: 100px;
+    height: 65px;
+    padding: 12px;
+    border-radius: 15px;
+    border: none;
+    background: #1D2D44;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.submit-btn label {
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background: #3E5C76;
+    box-shadow: 0 0 12px black;
+}
+
+.prop-overview-home {
+    display: flex;
+    flex-direction: column;
+    border: solid;
+    border-width: 1px;
+    border-radius: 20px;
+    padding: 10px;
+    min-height: 480px;
+    background-color: whitesmoke;
+    
+}
+
+.prop-img {
+    border-radius: 15px;
+    width: 100%;
+}
+
+.card-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+}
+
+.card-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.card-body p {
+    color: #6c757d;
+    font-size: 15px;
+    margin-top: 5px;
+}
+
+.view-btn {
+    width: 150px;
+    height: 50px;
+    color: white;
+    display: block;
+    border-radius: 20px;
+    border: none;
+    background: #1D2D44;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.view-section {
+    justify-self: start;
+    margin: 10px;
+}
+
+.view-btn:hover {
+    background: #3E5C76;
+    box-shadow: 0 0 12px black;
+}
+
+.group-btn-tenant {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mb-3-tenant {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.mb-3-tenant label {
+    margin-left: 8px;
+    width: 200px;
+    font-weight: 700;
+}
+
+.modal-header h5 {
+    font-weight: 700;
+}
+

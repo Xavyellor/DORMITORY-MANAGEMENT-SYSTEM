@@ -1,0 +1,81 @@
+.header-section-host {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.header-section-host h1 {
+    font-size: 38px;
+    font-weight: 700;
+}
+
+.prop-overview-host {
+    display: flex;
+    flex-direction: column;
+    border: solid;
+    border-width: 1px;
+    border-radius: 20px;
+    padding: 10px;
+    min-height: 480px;
+    background-color: whitesmoke;
+    
+}
+
+.add-btn-host {
+    align-self: center;
+    width: 250px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #1D2D44;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.card-body-host {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    height: 80px;
+    background-color: #748CAB;
+}
+
+.your-properties-txt {
+    font-weight: 700;
+}
+
+.card-body-host-view {
+    margin: 10px;
+    height: 300px;
+}
+
+.card-body-host-view h5 {
+    font-weight: 700;
+}
+
+.action-section {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px;
+}
+
+.edit-btn-host {
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    background-color: blue;
+    border-radius: 8px;
+}
+
+.delete-btn-host {
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    background-color: red;
+    border-radius: 8px;
+}
