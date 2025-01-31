@@ -179,27 +179,21 @@
 
                         <!-- Property Overview -->
                            <!-- Property Overview -->
-                           <div class="card-body">
+                        <div class="card-body">
                             <h5 class="card-title">{{ property.title }}</h5>
                             <p><strong>Price:</strong> ${{ property.price }}</p>
                             <p><strong>Location:</strong> {{ property.location }}</p>
-<<<<<<< HEAD
-                        </div>
 
-                        <div class="view-section">
-                            <button class="view-btn" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#propertyModal{{ property.id }}">
-=======
                             <p class="distance" id="distance-{{ property.id }}" 
                                 data-lat="{{ property.latitude }}" 
                                 data-lon="{{ property.longitude }}">
                                 Calculating distance...
                                 </p>
+                        </div>
+                        <div class="view-section">
                             <button class="btn btn-primary" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#propertyModal{{ property.id }}">
->>>>>>> 6aa8ed52bb8c68222d3955ed1f6abab375dd4a90
                                 View Details
                             </button>
                         </div>
