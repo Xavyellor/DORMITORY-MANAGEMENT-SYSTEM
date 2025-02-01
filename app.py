@@ -403,17 +403,22 @@ def delete_property(id):
     if property.user_id != current_user.id:
         abort(403)  # Forbidden
 
+    # Check if there are active contracts associated with this property
+    active_contracts = Contract.query.filter_by(property_id=id, status="Signed").count()
+    if active_contracts > 0:
+        flash("⚠️ Unable to delete property. There are active contracts associated with this property.", "danger")
+        return redirect(url_for('host_dashboard'))
+
     try:
         # Delete the property from the database
         db.session.delete(property)
         db.session.commit()
-        flash('Property deleted successfully!', 'success')
+        flash('✅ Property deleted successfully!', 'success')
     except Exception as e:
-        flash(f'Error deleting property: {str(e)}', 'danger')
         db.session.rollback()
+        flash(f'Error deleting property: {str(e)}', 'danger')
 
-    # Redirect based on user role
-    return redirect(url_for('host_dashboard') if current_user.role == 'Host' else url_for('tenant_dashboard'))
+    return redirect(url_for('host_dashboard'))
 
 # Route for tenants to request a booking
 @app.route('/book_property/<int:property_id>', methods=['POST'])
